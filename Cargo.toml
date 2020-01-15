@@ -1,5 +1,6 @@
 [workspace]
 
 members = [
-    "particules"
+    "particules",
+    "particules_app"
 ]
