@@ -16,18 +16,10 @@ impl Sma {
         }
     }
 
-    fn clear_all(&mut self) {
-        for agent in &mut self.agents {
-            agent.clear(&mut self.env)
-        }
-    }
-
     pub fn tick(&mut self) {
-        self.clear_all();
         for agent in &mut self.agents {
             agent.update(&mut self.env)
         }
-        self.draw_all();
     }
 
     pub fn get_state(&self) -> &Vec<Cell> {
@@ -42,8 +34,8 @@ impl Sma {
         self.env.width
     }
 
-    pub fn new() -> Sma {
-        let env = Environment::new(5, 5);
+    pub fn new(height: u32, width: u32) -> Sma {
+        let env = Environment::new(height, width);
 
 
         let agents = vec![

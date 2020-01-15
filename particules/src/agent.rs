@@ -20,20 +20,36 @@ impl Agent {
     }
 
     pub fn update(&mut self, environment: &mut Environment) {
+        self.clear(environment);
+
         let mut y_forward = self.get_v_forward();
         let mut x_forward = self.get_h_forward();
+        let out_of_bound_h = self.x == 0 || environment.is_out_of_bound_h(x_forward);
+        let out_of_bound_v =self.y == 0 || environment.is_out_of_bound_v(y_forward);
 
-        if self.y == 0 || environment.is_out_of_bound_v(y_forward) {
+        if !out_of_bound_h && ! out_of_bound_v {
+            let forward_idx = environment.get_index(x_forward, y_forward);
+            if let Cell::Filled = environment.cells[forward_idx] {
+                self.v_direction = self.v_direction.invert();
+                self.h_direction = self.h_direction.invert();
+                y_forward = self.get_v_forward();
+                x_forward = self.get_h_forward();
+            }
+        }
+
+        if out_of_bound_v {
             self.v_direction = self.v_direction.invert();
             y_forward = self.get_v_forward();
         }
 
-        if self.x == 0 || environment.is_out_of_bound_h(x_forward) {
+        if out_of_bound_h {
             self.h_direction = self.h_direction.invert();
             x_forward = self.get_h_forward();
         }
+
         self.y = y_forward;
         self.x = x_forward;
+        self.draw(environment);
     }
 
     fn get_h_forward(&self) -> u32 {
