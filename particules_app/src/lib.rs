@@ -27,6 +27,7 @@ pub enum Msg {
     Update,
     Start,
     Stop,
+    Step,
     Tick,
 }
 
@@ -59,6 +60,12 @@ impl Component for Model {
             }
             Msg::Stop => {
                 self.active = false;
+            }
+            Msg::Step => {
+                if self.active {
+                    self.active = false;
+                }
+                self.sma.tick();
             }
             Msg::Tick => {
                 if self.active {
@@ -106,6 +113,7 @@ impl Component for Model {
                     <p> {&self.height}</p>
                     <button class="game-button" onclick=self.link.callback(|_| Msg::Start)>{ "Start" }</button>
                     <button class="game-button" onclick=self.link.callback(|_| Msg::Stop)>{ "Stop" }</button>
+                    <button class="game-button" onclick=self.link.callback(|_| Msg::Step)>{ "Step" }</button>
                 </div>
                 <div class="particules">
                     {
