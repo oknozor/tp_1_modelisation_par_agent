@@ -4,10 +4,9 @@ use particules::environment::Cell;
 use particules::sma::Sma;
 use std::time::Duration;
 use yew::{
-    InputData,
     html,
     services::{IntervalService, Task},
-    Component, ComponentLink, Html, ShouldRender,
+    Component, ComponentLink, Html, InputData, ShouldRender,
 };
 
 pub struct Model {
@@ -72,18 +71,14 @@ impl Component for Model {
                     self.sma.tick();
                 }
             }
-            Msg::UpdateHeight(value) => {
-                match value.parse::<u32>() {
-                    Ok(value) => self.height = value,
-                    Err(e) => self.error = e.to_string()
-                }
-            }
-            Msg::UpdateWidth(value) => {
-                match value.parse::<u32>() {
-                    Ok(value) => self.width = value,
-                    Err(e) => self.error = e.to_string()
-                }
-            }
+            Msg::UpdateHeight(value) => match value.parse::<u32>() {
+                Ok(value) => self.height = value,
+                Err(e) => self.error = e.to_string(),
+            },
+            Msg::UpdateWidth(value) => match value.parse::<u32>() {
+                Ok(value) => self.width = value,
+                Err(e) => self.error = e.to_string(),
+            },
             Msg::Update => {
                 self.active = false;
                 self.sma = Sma::new(self.width, self.height)
