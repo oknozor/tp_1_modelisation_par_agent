@@ -64,7 +64,7 @@ impl Sma {
                 v_direction: VDirection::Up,
                 h_direction: HDirection::Right,
                 color: Default::default(),
-            },
+            }
         ];
 
         Sma { env, agents }

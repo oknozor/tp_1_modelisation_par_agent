@@ -43,17 +43,28 @@ impl Agent {
     }
 
     pub fn update(&mut self, environment: &mut Environment) {
+        self.decide(environment);
+
+        let (x_forward, y_forward) = self.look_ahead();
+
+        self.y = y_forward;
+        self.x = x_forward;
+        self.draw(environment);
+    }
+
+    fn decide(&mut self, environment: &mut Environment) {
         self.clear(environment);
         self.color = Color::Black;
 
-        let mut y_forward = self.get_v_forward();
-        let mut x_forward = self.get_h_forward();
+        let (x_forward, y_forward) = self.look_ahead();
+
         let out_of_bound_h = self.x == 0 || environment.is_out_of_bound_h(x_forward);
         let out_of_bound_v =self.y == 0 || environment.is_out_of_bound_v(y_forward);
 
         if !out_of_bound_h && ! out_of_bound_v {
             let forward_idx = environment.get_index(x_forward, y_forward);
             let cell_forward = environment.cells[forward_idx].clone();
+
             match cell_forward {
                 Cell::Empty => (),
                 Cell::Filled(agent) => {
@@ -67,41 +78,30 @@ impl Agent {
                     self.h_direction = agent.borrow().h_direction;
                     agent.borrow_mut().h_direction = direction_h;
                     agent.borrow_mut().v_direction = direction_v;
-                    y_forward = self.get_v_forward();
-                    x_forward = self.get_h_forward();
+
                 }
             };
         }
 
         if out_of_bound_v {
             self.v_direction = self.v_direction.invert();
-            y_forward = self.get_v_forward();
         }
 
         if out_of_bound_h {
             self.h_direction = self.h_direction.invert();
-            x_forward = self.get_h_forward();
         }
-
-        self.y = y_forward;
-        self.x = x_forward;
-        self.draw(environment);
     }
 
-    fn get_h_forward(&self) -> u32 {
+    fn look_ahead(&self) -> (u32, u32) {
         (match self.h_direction {
             HDirection::Left if self.x != 0 => self.x - 1,
             HDirection::Right => self.x + 1,
             _ => self.x,
-        }) as u32
-    }
-
-    fn get_v_forward(&self) -> u32 {
-        (match self.v_direction {
+        }, match self.v_direction {
             VDirection::Up => self.y + 1,
             VDirection::Down if self.y != 0 => self.y - 1,
             _ => self.y,
-        }) as u32
+        }) as (u32, u32)
     }
 }
 
