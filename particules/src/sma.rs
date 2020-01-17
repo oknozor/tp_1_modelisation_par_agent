@@ -3,7 +3,7 @@ use crate::agent::HDirection;
 use crate::agent::VDirection;
 use crate::environment::Cell;
 use crate::environment::Environment;
-
+use rand::{thread_rng, seq::SliceRandom};
 pub struct Sma {
     pub env: Environment,
     pub agents: Vec<Agent>,
@@ -17,6 +17,12 @@ impl Sma {
     }
 
     pub fn tick(&mut self) {
+        let mut agents = &mut self.agents;
+        let slice: &mut [Agent] = &mut agents;
+        slice.shuffle(&mut thread_rng());
+
+        self.agents = slice.into();
+
         for agent in &mut self.agents {
             agent.update(&mut self.env)
         }
