@@ -1,7 +1,11 @@
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+use crate::agent::Agent;
+use std::cell::RefCell;
+use std::rc::Rc;
+
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Cell {
     Empty,
-    Filled,
+    Filled(Rc<RefCell<Agent>>),
 }
 
 pub struct Environment {
@@ -12,7 +16,7 @@ pub struct Environment {
 
 impl Environment {
     pub fn is_out_of_bound_v(&self, y: u32) -> bool {
-        if y > self.height -1 {
+        if y > self.height - 1 {
             true
         } else {
             false
@@ -20,7 +24,7 @@ impl Environment {
     }
 
     pub fn is_out_of_bound_h(&self, x: u32) -> bool {
-        if x > self.width -1 {
+        if x > self.width - 1 {
             true
         } else {
             false
@@ -39,7 +43,11 @@ impl Environment {
             cells.push(Cell::Empty);
         }
 
-        Environment{ width, height, cells }
+        Environment {
+            width,
+            height,
+            cells,
+        }
     }
 }
 
@@ -63,5 +71,4 @@ pub mod test {
         assert!(env.is_out_of_bound_h(5));
         assert!(env.is_out_of_bound_v(5));
     }
-
 }

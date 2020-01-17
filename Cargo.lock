@@ -201,6 +201,9 @@ dependencies = [
 [[package]]
 name = "particules"
 version = "0.1.0"
+dependencies = [
+ "rand 0.6.5 (registry+https://github.com/rust-lang/crates.io-index)",
+]
 
 [[package]]
 name = "particules_app"

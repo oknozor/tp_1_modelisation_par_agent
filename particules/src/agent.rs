@@ -1,17 +1,40 @@
 use crate::environment::Cell;
 use crate::environment::Environment;
+use std::rc::Rc;
+use std::cell::RefCell;
 
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Agent {
     pub h_direction: HDirection,
     pub v_direction: VDirection,
     pub x: u32,
     pub y: u32,
+    pub color: Color
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum Color {
+    Black,
+    Red
+}
+
+impl Default for Color {
+    fn default() -> Self { Color::Black }
+}
+
+impl Color {
+    pub fn as_str(&self) -> &str {
+        match self {
+            Color::Black => "black",
+            Color::Red => "red",
+        }
+    }
 }
 
 impl Agent {
     pub fn draw(&mut self, environment: &mut Environment) {
         let idx = environment.get_index(self.x, self.y);
-        environment.cells[idx] = Cell::Filled;
+        environment.cells[idx] = Cell::Filled(Rc::new(RefCell::new(self.clone())));
     }
 
     pub fn clear(&mut self, environment: &mut Environment) {
@@ -21,6 +44,7 @@ impl Agent {
 
     pub fn update(&mut self, environment: &mut Environment) {
         self.clear(environment);
+        self.color = Color::Black;
 
         let mut y_forward = self.get_v_forward();
         let mut x_forward = self.get_h_forward();
@@ -29,12 +53,24 @@ impl Agent {
 
         if !out_of_bound_h && ! out_of_bound_v {
             let forward_idx = environment.get_index(x_forward, y_forward);
-            if let Cell::Filled = environment.cells[forward_idx] {
-                self.v_direction = self.v_direction.invert();
-                self.h_direction = self.h_direction.invert();
-                y_forward = self.get_v_forward();
-                x_forward = self.get_h_forward();
-            }
+            let cell_forward = environment.cells[forward_idx].clone();
+            match cell_forward {
+                Cell::Empty => (),
+                Cell::Filled(agent) => {
+                    self.color = Color::Red;
+                    agent.borrow_mut().color = Color::Red;
+
+                    // Swap agents directions
+                    let direction_h = self.h_direction;
+                    let direction_v = self.v_direction;
+                    self.v_direction = agent.borrow().v_direction;
+                    self.h_direction = agent.borrow().h_direction;
+                    agent.borrow_mut().h_direction = direction_h;
+                    agent.borrow_mut().v_direction = direction_v;
+                    y_forward = self.get_v_forward();
+                    x_forward = self.get_h_forward();
+                }
+            };
         }
 
         if out_of_bound_v {

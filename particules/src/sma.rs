@@ -37,26 +37,28 @@ impl Sma {
     pub fn new(height: u32, width: u32) -> Sma {
         let env = Environment::new(height, width);
 
-
         let agents = vec![
-        Agent {
-            x: 0,
-            y: 0,
-            v_direction: VDirection::None,
-            h_direction: HDirection::Right,
-        },
-        Agent {
-            x: 4,
-            y: 4,
-            v_direction: VDirection::Up,
-            h_direction: HDirection::None,
-        },
-        Agent {
-            x: 0,
-            y: 4,
-            v_direction: VDirection::Up,
-            h_direction: HDirection::Right,
-        }
+            Agent {
+                x: 0,
+                y: 0,
+                v_direction: VDirection::None,
+                h_direction: HDirection::Right,
+                color: Default::default(),
+            },
+            Agent {
+                x: 4,
+                y: 4,
+                v_direction: VDirection::Up,
+                h_direction: HDirection::None,
+                color: Default::default(),
+            },
+            Agent {
+                x: 0,
+                y: 4,
+                v_direction: VDirection::Up,
+                h_direction: HDirection::Right,
+                color: Default::default(),
+            },
         ];
 
         Sma { env, agents }

@@ -122,8 +122,12 @@ impl Component for Model {
 impl Model {
     fn view_cell(&self, (idx, cell): (usize, &Cell)) -> Html {
         let cell_status = match cell {
-            Cell::Filled => "cell-filled",
-            Cell::Empty => "cell-empty",
+            Cell::Filled(agent) => {
+                let agent = agent.borrow();
+                let color = agent.color.as_str();
+                format!("cell-{}", color)
+            }
+            Cell::Empty => "cell-empty".into(),
         };
 
         html! {
