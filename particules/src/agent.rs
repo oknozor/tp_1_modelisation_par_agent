@@ -1,7 +1,7 @@
 use crate::environment::Cell;
 use crate::environment::Environment;
-use std::rc::Rc;
 use std::cell::RefCell;
+use std::rc::Rc;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Agent {
@@ -9,26 +9,13 @@ pub struct Agent {
     pub v_direction: VDirection,
     pub x: u32,
     pub y: u32,
-    pub color: Color
+    pub color: Color,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Color {
     Black,
-    Red
-}
-
-impl Default for Color {
-    fn default() -> Self { Color::Black }
-}
-
-impl Color {
-    pub fn as_str(&self) -> &str {
-        match self {
-            Color::Black => "black",
-            Color::Red => "red",
-        }
-    }
+    Red,
 }
 
 impl Agent {
@@ -59,9 +46,9 @@ impl Agent {
         let (x_forward, y_forward) = self.look_ahead();
 
         let out_of_bound_h = self.x == 0 || environment.is_out_of_bound_h(x_forward);
-        let out_of_bound_v =self.y == 0 || environment.is_out_of_bound_v(y_forward);
+        let out_of_bound_v = self.y == 0 || environment.is_out_of_bound_v(y_forward);
 
-        if !out_of_bound_h && ! out_of_bound_v {
+        if !out_of_bound_h && !out_of_bound_v {
             let forward_idx = environment.get_index(x_forward, y_forward);
             let cell_forward = environment.cells[forward_idx].clone();
 
@@ -78,7 +65,6 @@ impl Agent {
                     self.h_direction = agent.borrow().h_direction;
                     agent.borrow_mut().h_direction = direction_h;
                     agent.borrow_mut().v_direction = direction_v;
-
                 }
             };
         }
@@ -93,15 +79,18 @@ impl Agent {
     }
 
     fn look_ahead(&self) -> (u32, u32) {
-        (match self.h_direction {
-            HDirection::Left if self.x != 0 => self.x - 1,
-            HDirection::Right => self.x + 1,
-            _ => self.x,
-        }, match self.v_direction {
-            VDirection::Up => self.y + 1,
-            VDirection::Down if self.y != 0 => self.y - 1,
-            _ => self.y,
-        }) as (u32, u32)
+        (
+            match self.h_direction {
+                HDirection::Left if self.x != 0 => self.x - 1,
+                HDirection::Right => self.x + 1,
+                _ => self.x,
+            },
+            match self.v_direction {
+                VDirection::Up => self.y + 1,
+                VDirection::Down if self.y != 0 => self.y - 1,
+                _ => self.y,
+            },
+        ) as (u32, u32)
     }
 }
 
@@ -135,6 +124,21 @@ impl HDirection {
             HDirection::None => HDirection::None,
             HDirection::Left => HDirection::Right,
             HDirection::Right => HDirection::Left,
+        }
+    }
+}
+
+impl Default for Color {
+    fn default() -> Self {
+        Color::Black
+    }
+}
+
+impl Color {
+    pub fn as_str(&self) -> &str {
+        match self {
+            Color::Black => "black",
+            Color::Red => "red",
         }
     }
 }

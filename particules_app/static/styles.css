@@ -12,10 +12,10 @@ body {
     margin: 0 auto;
     -webkit-font-smoothing: antialiased;
     -moz-font-smoothing: antialiased;
-    font-smoothing: antialiased;
     font-weight: 300;
     background-color: #000000;
 }
+
 
 .row {
     display: flex;
@@ -24,11 +24,7 @@ body {
     position: relative;
   }
 
-.app-logo {
-    animation: app-logo-scale infinite 4s linear;
-    height: 80px;
-    width: 80px;
-}
+
 
 .app-header {
     background-color: #000;
@@ -66,13 +62,13 @@ body {
 
 .particules {
     background-color: aliceblue;
-    overflow: hidden;
+    /* overflow: hidden; */
 }
 
 .cell {
     float: left;
-    width: 16px;
-    height: 16px;
+    width: 10px;
+    height: 10px;
     border: 1px solid #ccc;
 }
 
@@ -92,6 +88,33 @@ body {
     width: 100%;
     margin-top: 20px;
 }
+
+i {
+    border: solid black;
+    border-width: 0 3px 3px 0;
+    display: inline-block;
+    padding: 3px;
+  }
+  
+  .right {
+    transform: rotate(-45deg);
+    -webkit-transform: rotate(-45deg);
+  }
+  
+  .left {
+    transform: rotate(135deg);
+    -webkit-transform: rotate(135deg);
+  }
+  
+  .up {
+    transform: rotate(-135deg);
+    -webkit-transform: rotate(-135deg);
+  }
+  
+  .down {
+    transform: rotate(45deg);
+    -webkit-transform: rotate(45deg);
+  }
 
 @keyframes app-logo-scale {
     from { transform: scale(0.8); }
