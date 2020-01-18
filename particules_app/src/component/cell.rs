@@ -1,5 +1,5 @@
 use particules::agent::Color as AgentColor;
-use yew::{html, macros::Properties, Component, ComponentLink, Html, ShouldRender};
+use yew::{html, macros::Properties, Callback, Component, ComponentLink, Html, ShouldRender};
 
 pub struct CellComponent {
     link: ComponentLink<Self>,
@@ -8,19 +8,32 @@ pub struct CellComponent {
 
 #[derive(Properties, Clone)]
 pub struct Props {
+    #[props(required)]
     pub x: u32,
+    #[props(required)]
     pub y: u32,
+    #[props(required)]
+    pub on_click: Callback<(u32, u32)>,
+}
+
+pub enum Msg {
+    CreateAgent,
 }
 
 impl Component for CellComponent {
-    type Message = ();
+    type Message = Msg;
     type Properties = Props;
 
     fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
         CellComponent { link, props }
     }
 
-    fn update(&mut self, _: Self::Message) -> ShouldRender {
+    fn update(&mut self, msg: Self::Message) -> ShouldRender {
+        match msg {
+            Msg::CreateAgent => {
+                self.props.on_click.emit((self.props.x, self.props.y));
+            }
+        }
         true
     }
 
@@ -29,7 +42,7 @@ impl Component for CellComponent {
     }
 
     fn view(&self) -> Html {
-        html! {<div class=("cell", Color::None.as_str())></div>}
+        html! {<div onclick=self.link.callback(move|_| Msg::CreateAgent) class=("cell", Color::None.as_str())></div>}
     }
 }
 

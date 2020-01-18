@@ -5,8 +5,8 @@ use std::rc::Rc;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Agent {
-    pub h_direction: HDirection,
     pub v_direction: VDirection,
+    pub h_direction: HDirection,
     pub x: u32,
     pub y: u32,
     pub color: Color,
@@ -59,35 +59,37 @@ impl Agent {
                     agent.borrow_mut().color = Color::Red;
 
                     // Swap agents directions
-                    let direction_h = self.h_direction;
-                    let direction_v = self.v_direction;
-                    self.v_direction = agent.borrow().v_direction;
+                    let direction_h = self.v_direction;
+                    let direction_v = self.h_direction;
                     self.h_direction = agent.borrow().h_direction;
-                    agent.borrow_mut().h_direction = direction_h;
-                    agent.borrow_mut().v_direction = direction_v;
+                    self.v_direction = agent.borrow().v_direction;
+                    agent.borrow_mut().v_direction = direction_h;
+                    agent.borrow_mut().h_direction = direction_v;
                 }
             };
         }
 
         if out_of_bound_v {
-            self.v_direction = self.v_direction.invert();
+            self.h_direction = self.h_direction.invert();
         }
 
         if out_of_bound_h {
-            self.h_direction = self.h_direction.invert();
+            self.v_direction = self.v_direction.invert();
         }
     }
 
     fn look_ahead(&self) -> (u32, u32) {
         (
-            match self.h_direction {
-                HDirection::Left if self.x != 0 => self.x - 1,
-                HDirection::Right => self.x + 1,
+            match self.v_direction {
+                //v
+                VDirection::Up if self.x != 0 => self.x - 1, // UP
+                VDirection::Down => self.x + 1,              // Down
                 _ => self.x,
             },
-            match self.v_direction {
-                VDirection::Up => self.y + 1,
-                VDirection::Down if self.y != 0 => self.y - 1,
+            match self.h_direction {
+                //h
+                HDirection::Right => self.y + 1, // right
+                HDirection::Left if self.y != 0 => self.y - 1, // left
                 _ => self.y,
             },
         ) as (u32, u32)
@@ -95,35 +97,35 @@ impl Agent {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum VDirection {
-    None,
-    Up,
-    Down,
-}
-
-impl VDirection {
-    fn invert(&self) -> VDirection {
-        match self {
-            VDirection::None => VDirection::None,
-            VDirection::Up => VDirection::Down,
-            VDirection::Down => VDirection::Up,
-        }
-    }
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum HDirection {
     None,
-    Left,
     Right,
+    Left,
 }
 
 impl HDirection {
     fn invert(&self) -> HDirection {
         match self {
             HDirection::None => HDirection::None,
-            HDirection::Left => HDirection::Right,
             HDirection::Right => HDirection::Left,
+            HDirection::Left => HDirection::Right,
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum VDirection {
+    None,
+    Down,
+    Up,
+}
+
+impl VDirection {
+    fn invert(&self) -> VDirection {
+        match self {
+            VDirection::None => VDirection::None,
+            VDirection::Down => VDirection::Up,
+            VDirection::Up => VDirection::Down,
         }
     }
 }

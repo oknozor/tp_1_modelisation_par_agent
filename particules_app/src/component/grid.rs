@@ -1,8 +1,8 @@
-use particules::sma::Sma;
 use particules::agent::Agent;
+use particules::agent::Color as AgentColor;
 use particules::agent::HDirection;
 use particules::agent::VDirection;
-use particules::agent::Color as AgentColor;
+use particules::sma::Sma;
 
 use std::time::Duration;
 use yew::{
@@ -14,7 +14,6 @@ use yew::{
 
 use super::cell::CellComponent;
 use super::cell::Color;
-use log::trace;
 use stdweb::web::Element;
 use stdweb::web::IElement;
 
@@ -22,7 +21,9 @@ pub struct Grid {
     link: ComponentLink<Self>,
     props: Props,
     sma: Sma,
+    direction: (HDirection, VDirection),
     active: bool,
+    error: String,
     refs: Vec<NodeRef>,
     #[allow(unused)]
     job: Box<dyn Task>,
@@ -32,15 +33,16 @@ pub struct Grid {
 pub struct Props {
     pub width: u32,
     pub height: u32,
-    pub agents: Vec<Agent>
+    pub agents: Vec<Agent>,
 }
 
 pub enum Msg {
-    Start,
-    AddAgent(Agent),
-    Stop,
+    Play,
+    AddAgent((u32, u32)),
+    Clear,
     Step,
     Tick,
+    ChangeDir((HDirection, VDirection)),
 }
 
 impl Component for Grid {
@@ -50,37 +52,56 @@ impl Component for Grid {
     fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
         let callback = link.callback(|_| Msg::Tick);
         let mut interval = IntervalService::new();
-        let handle = interval.spawn(Duration::from_millis(200), callback);
+        let handle = interval.spawn(Duration::from_millis(50), callback);
         let sma = Sma::new(props.width, props.height);
         let refs = Self::init_refs(&sma);
+        let direction = (HDirection::Right, VDirection::None);
 
         Grid {
             link,
             sma,
             props,
+            direction,
+            error: "".into(),
             refs,
             active: false,
             job: Box::new(handle),
         }
     }
 
-    fn change(&mut self, props: Self::Properties) -> ShouldRender {
-        self.props = props;
-        self.sma = Sma::new(self.props.width, self.props.height);
-        self.refs = Self::init_refs(&self.sma);
-        true
+    fn mounted(&mut self) -> ShouldRender {
+        self.draw_agents();
+        false
     }
 
     fn update(&mut self, msg: Self::Message) -> ShouldRender {
         match msg {
-            Msg::AddAgent(agent) => {
-                self.sma.add_agent(agent);
+            Msg::AddAgent((x, y)) => {
+                if self.direction != (HDirection::None, VDirection::None) {
+                    let agent = Agent {
+                        x,
+                        y,
+                        h_direction: self.direction.0,
+                        v_direction: self.direction.1,
+                        color: AgentColor::default(),
+                    };
+
+                    self.sma.add_agent(agent);
+                    self.draw_agents();
+                } else {
+                    self.error = "Please chose a direction".into()
+                }
+                return true;
             }
-            Msg::Start => {
-                self.active = true;
+            Msg::Play => {
+                self.active = !self.active;
+                return true;
             }
-            Msg::Stop => {
+            Msg::Clear => {
                 self.active = false;
+                self.clear_filled_cells();
+                self.sma.agents = vec![];
+                return true;
             }
             Msg::Step => {
                 if self.active {
@@ -89,6 +110,7 @@ impl Component for Grid {
                 self.clear_filled_cells();
                 self.sma.tick();
                 self.draw_agents();
+                return true;
             }
             Msg::Tick => {
                 if self.active {
@@ -97,6 +119,10 @@ impl Component for Grid {
                     self.draw_agents();
                 }
             }
+            Msg::ChangeDir(dir) => {
+                self.direction = dir;
+                return true;
+            }
         }
         false
     }
@@ -104,22 +130,36 @@ impl Component for Grid {
     fn view(&self) -> Html {
         html! {
             <section class="environment-area">
+            <div class="menu">
                 <div class="game-buttons">
-                    <button class="game-button" onclick=self.link.callback(|_| Msg::Start)>{ "Start" }</button>
-                    <button class="game-button" onclick=self.link.callback(|_| Msg::Stop)>{ "Stop" }</button>
-                    <button class="game-button" onclick=self.link.callback(|_| Msg::Step)>{ "Step" }</button>
-                    <button class="game-button" onclick=self.link.callback(|_| Msg::AddAgent(Agent {
-                        x: 0,
-                        y: 0,
-                        h_direction: HDirection::Right,
-                        v_direction: VDirection::None,
-                        color: AgentColor::default(),
-                    }))>{ "Add" }</button>
+                        <button class="game-button" onclick=self.link.callback(|_| Msg::Play)>{ if !self.active {{"Play"}} else {{"Pause"}} }</button>
+                        <button class="game-button" onclick=self.link.callback(|_| Msg::Clear)>{ "Clear" }</button>
+                        <button class="game-button" onclick=self.link.callback(|_| Msg::Step)>{ "Step" }</button>
+                    </div>
+                <div class="">
+                    <div class="row">
+                        <button class="" onclick=self.link.callback(|_| Msg::ChangeDir((HDirection::Left, VDirection::Up)))><i class="left-up"></i></button>
+                        <button class="" onclick=self.link.callback(|_| Msg::ChangeDir((HDirection::None, VDirection::Up)))><i class="up"></i></button>
+                        <button class="" onclick=self.link.callback(|_| Msg::ChangeDir((HDirection::Right, VDirection::Up)))><i class="right-up"></i></button>
+                    </div>
+                    <div class="row">
+                        <button class="" onclick=self.link.callback(|_| Msg::ChangeDir((HDirection::Left, VDirection::None)))><i class="left"></i></button>
+                        <span class="dot"></span>
+                        <button class="" onclick=self.link.callback(|_| Msg::ChangeDir((HDirection::Right, VDirection::None)))><i class="right"></i></button>
+                    </div>
+                    <div class="row">
+                    <button class="" onclick=self.link.callback(|_| Msg::ChangeDir((HDirection::Left, VDirection::Down)))><i class="left-down"></i></button>
+                    <button class="" onclick=self.link.callback(|_| Msg::ChangeDir((HDirection::None, VDirection::Down)))><i class="down"></i></button>
+                    <button class="" onclick=self.link.callback(|_| Msg::ChangeDir((HDirection::Right, VDirection::Down)))><i class="right-down"></i></button>
+                    </div>
                 </div>
-
-                <div class="particules">
-                    {(0..self.props.width).map(|row| self.view_row(row)).collect::<Html>()}
-                </div>
+            </div>
+            <div>
+                <i class={self.dir_to_arrow()}> </i>
+            </div>
+            <div class="particules">
+                {(0..self.props.width).map(|row| self.view_row(row)).collect::<Html>()}
+            </div>
             </section>
         }
     }
@@ -139,7 +179,7 @@ impl Grid {
     fn view_cell(&self, x: u32, y: u32) -> Html {
         let idx = self.sma.get_index(x, y);
         html! {
-            <CellComponent x={x} y ={y} ref=self.refs[idx].clone()/>
+            <CellComponent x={x} y ={y} ref=self.refs[idx].clone() on_click=self.link.callback(Msg::AddAgent)/>
         }
     }
 
@@ -170,12 +210,23 @@ impl Grid {
             let idx = self.sma.get_index(agent.x, agent.y);
 
             if let Some(cell) = self.refs[idx].try_into::<Element>() {
-                trace!("INFO : Agent {} {} {:?}", agent.x, agent.y, agent.color);
                 cell.set_attribute("class", &format!("cell {}", color.as_str()))
                     .expect(":(");
-            } else {
-                trace!("ERROR : Agent {} {} {:?}", agent.x, agent.y, agent.color);
             }
         });
+    }
+
+    fn dir_to_arrow(&self) -> &str {
+        match self.direction {
+            (HDirection::None, VDirection::Up) => "up",
+            (HDirection::None, VDirection::Down) => "down",
+            (HDirection::Right, VDirection::None) => "right",
+            (HDirection::Left, VDirection::None) => "left",
+            (HDirection::Right, VDirection::Down) => "right-down",
+            (HDirection::Right, VDirection::Up) => "right-up",
+            (HDirection::Left, VDirection::Down) => "left-down",
+            (HDirection::Left, VDirection::Up) => "left-up",
+            (_, _) => "dot",
+        }
     }
 }

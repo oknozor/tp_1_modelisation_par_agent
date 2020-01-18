@@ -1,6 +1,4 @@
 use crate::agent::Agent;
-use crate::agent::HDirection;
-use crate::agent::VDirection;
 use crate::environment::Cell;
 use crate::environment::Environment;
 use rand::{seq::SliceRandom, thread_rng};
@@ -32,11 +30,21 @@ impl Sma {
 
     pub fn new(height: u32, width: u32) -> Sma {
         let env = Environment::new(height, width);
-        Sma { env, agents: vec![] }
+        Sma {
+            env,
+            agents: vec![],
+        }
     }
 
     pub fn add_agent(&mut self, agent: Agent) {
-        self.agents.push(agent);
+        let already_filled = self
+            .agents
+            .iter()
+            .find(|agent_in_memory| (agent_in_memory.x, agent_in_memory.y) == (agent.x, agent.y));
+
+        if let None = already_filled {
+            self.agents.push(agent);
+        }
     }
 
     pub fn get_state(&self) -> &Vec<Cell> {
