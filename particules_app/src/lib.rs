@@ -3,6 +3,9 @@
 use yew::{html, Component, ComponentLink, Html, InputData, ShouldRender};
 mod component;
 use component::grid::Grid;
+use particules::agent::Agent;
+use particules::agent::HDirection;
+use particules::agent::VDirection;
 pub struct Model {
     link: ComponentLink<Self>,
     height: u32,

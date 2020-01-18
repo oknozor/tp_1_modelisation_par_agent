@@ -1,4 +1,9 @@
 use particules::sma::Sma;
+use particules::agent::Agent;
+use particules::agent::HDirection;
+use particules::agent::VDirection;
+use particules::agent::Color as AgentColor;
+
 use std::time::Duration;
 use yew::{
     html,
@@ -27,10 +32,12 @@ pub struct Grid {
 pub struct Props {
     pub width: u32,
     pub height: u32,
+    pub agents: Vec<Agent>
 }
 
 pub enum Msg {
     Start,
+    AddAgent(Agent),
     Stop,
     Step,
     Tick,
@@ -66,6 +73,9 @@ impl Component for Grid {
 
     fn update(&mut self, msg: Self::Message) -> ShouldRender {
         match msg {
+            Msg::AddAgent(agent) => {
+                self.sma.add_agent(agent);
+            }
             Msg::Start => {
                 self.active = true;
             }
@@ -98,6 +108,13 @@ impl Component for Grid {
                     <button class="game-button" onclick=self.link.callback(|_| Msg::Start)>{ "Start" }</button>
                     <button class="game-button" onclick=self.link.callback(|_| Msg::Stop)>{ "Stop" }</button>
                     <button class="game-button" onclick=self.link.callback(|_| Msg::Step)>{ "Step" }</button>
+                    <button class="game-button" onclick=self.link.callback(|_| Msg::AddAgent(Agent {
+                        x: 0,
+                        y: 0,
+                        h_direction: HDirection::Right,
+                        v_direction: VDirection::None,
+                        color: AgentColor::default(),
+                    }))>{ "Add" }</button>
                 </div>
 
                 <div class="particules">
@@ -122,7 +139,7 @@ impl Grid {
     fn view_cell(&self, x: u32, y: u32) -> Html {
         let idx = self.sma.get_index(x, y);
         html! {
-            <CellComponent ref=self.refs[idx].clone()/>
+            <CellComponent x={x} y ={y} ref=self.refs[idx].clone()/>
         }
     }
 

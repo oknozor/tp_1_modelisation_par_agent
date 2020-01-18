@@ -1,14 +1,23 @@
 use particules::agent::Color as AgentColor;
-use yew::{html, Component, ComponentLink, Html, ShouldRender};
+use yew::{html, macros::Properties, Component, ComponentLink, Html, ShouldRender};
 
-pub struct CellComponent(ComponentLink<Self>);
+pub struct CellComponent {
+    link: ComponentLink<Self>,
+    props: Props,
+}
+
+#[derive(Properties, Clone)]
+pub struct Props {
+    pub x: u32,
+    pub y: u32,
+}
 
 impl Component for CellComponent {
     type Message = ();
-    type Properties = ();
+    type Properties = Props;
 
-    fn create(_: Self::Properties, link: ComponentLink<Self>) -> Self {
-        CellComponent(link)
+    fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
+        CellComponent { link, props }
     }
 
     fn update(&mut self, _: Self::Message) -> ShouldRender {
