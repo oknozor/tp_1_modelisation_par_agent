@@ -1,6 +1,9 @@
+use super::HDirection;
+use super::VDirection;
 use crate::environment::Cell;
 use crate::environment::Environment;
 use std::cell::RefCell;
+use std::fmt::Debug;
 use std::rc::Rc;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -9,13 +12,7 @@ pub struct Agent {
     pub h_direction: HDirection,
     pub x: u32,
     pub y: u32,
-    pub color: Color,
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Color {
-    Black,
-    Red,
+    pub collision: bool,
 }
 
 impl Agent {
@@ -41,7 +38,7 @@ impl Agent {
 
     fn decide(&mut self, environment: &mut Environment) {
         self.clear(environment);
-        self.color = Color::Black;
+        self.collision = false;
 
         let (x_forward, y_forward) = self.look_ahead();
 
@@ -55,8 +52,8 @@ impl Agent {
             match cell_forward {
                 Cell::Empty => (),
                 Cell::Filled(agent) => {
-                    self.color = Color::Red;
-                    agent.borrow_mut().color = Color::Red;
+                    self.collision = true;
+                    agent.borrow_mut().collision = true;
 
                     // Swap agents directions
                     let direction_h = self.v_direction;
@@ -81,66 +78,15 @@ impl Agent {
     fn look_ahead(&self) -> (u32, u32) {
         (
             match self.v_direction {
-                //v
-                VDirection::Up if self.x != 0 => self.x - 1, // UP
-                VDirection::Down => self.x + 1,              // Down
+                VDirection::Up if self.x != 0 => self.x - 1,
+                VDirection::Down => self.x + 1,
                 _ => self.x,
             },
             match self.h_direction {
-                //h
-                HDirection::Right => self.y + 1, // right
-                HDirection::Left if self.y != 0 => self.y - 1, // left
+                HDirection::Right => self.y + 1,
+                HDirection::Left if self.y != 0 => self.y - 1,
                 _ => self.y,
             },
         ) as (u32, u32)
-    }
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum HDirection {
-    None,
-    Right,
-    Left,
-}
-
-impl HDirection {
-    fn invert(&self) -> HDirection {
-        match self {
-            HDirection::None => HDirection::None,
-            HDirection::Right => HDirection::Left,
-            HDirection::Left => HDirection::Right,
-        }
-    }
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum VDirection {
-    None,
-    Down,
-    Up,
-}
-
-impl VDirection {
-    fn invert(&self) -> VDirection {
-        match self {
-            VDirection::None => VDirection::None,
-            VDirection::Down => VDirection::Up,
-            VDirection::Up => VDirection::Down,
-        }
-    }
-}
-
-impl Default for Color {
-    fn default() -> Self {
-        Color::Black
-    }
-}
-
-impl Color {
-    pub fn as_str(&self) -> &str {
-        match self {
-            Color::Black => "black",
-            Color::Red => "red",
-        }
     }
 }

@@ -1,5 +1,6 @@
 #![recursion_limit = "1024"]
 
+use particules::agent::Agent;
 use yew::{html, Component, ComponentLink, Html, InputData, ShouldRender};
 mod component;
 use component::grid::Grid;

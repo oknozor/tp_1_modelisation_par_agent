@@ -1,4 +1,3 @@
-use particules::agent::Color as AgentColor;
 use yew::{html, macros::Properties, Callback, Component, ComponentLink, Html, ShouldRender};
 
 pub struct CellComponent {
@@ -54,10 +53,11 @@ pub enum Color {
 }
 
 impl Color {
-    pub fn from(color: AgentColor) -> Self {
-        match color {
-            AgentColor::Black => Color::Black,
-            AgentColor::Red => Color::Red,
+    pub fn from(collision: bool) -> Self {
+        if collision {
+            Color::Red
+        } else {
+            Color::Black
         }
     }
 

@@ -1,8 +1,7 @@
 use particules::agent::Agent;
-use particules::agent::Color as AgentColor;
-use particules::agent::HDirection;
-use particules::agent::VDirection;
 use particules::sma::Sma;
+use particules::HDirection;
+use particules::VDirection;
 
 use std::time::Duration;
 use yew::{
@@ -83,7 +82,7 @@ impl Component for Grid {
                         y,
                         h_direction: self.direction.0,
                         v_direction: self.direction.1,
-                        color: AgentColor::default(),
+                        collision: false,
                     };
 
                     self.sma.add_agent(agent);
@@ -155,7 +154,10 @@ impl Component for Grid {
                 </div>
             </div>
             <div>
-                <i class={self.dir_to_arrow()}> </i>
+                <i class={self.dir_to_arrow(self.direction)}> </i>
+            </div>
+            <div>
+                {self.view_debug()}
             </div>
             <div class="particules">
                 {(0..self.props.width).map(|row| self.view_row(row)).collect::<Html>()}
@@ -183,6 +185,30 @@ impl Grid {
         }
     }
 
+    fn view_debug(&self) -> Html {
+        html! {
+            <div>
+            {
+                self.sma.agents.iter().enumerate().map(|agent| {
+                    {self.agent_info(agent)}
+                }).collect::<Html>()
+            }
+            </div>
+        }
+    }
+
+    fn agent_info(&self, (idx, agent): (usize, &Agent)) -> Html {
+        html! {
+            <div class ="row">
+                {idx}
+                {"| \tx : "} {agent.x}
+                {"\ty : "} {agent.y}
+                {"\tcollsion : "} {agent.collision}
+                {"\t direction : "} <i class={self.dir_to_arrow((agent.h_direction, agent.v_direction))}></i>
+            </div>
+        }
+    }
+
     pub fn init_refs(sma: &Sma) -> Vec<NodeRef> {
         let mut refs = vec![];
         for _ in sma.get_state() {
@@ -205,7 +231,7 @@ impl Grid {
 
     fn draw_agents(&mut self) {
         self.sma.agents.iter().for_each(|agent| {
-            let color = Color::from(agent.color);
+            let color = Color::from(agent.collision);
 
             let idx = self.sma.get_index(agent.x, agent.y);
 
@@ -216,8 +242,8 @@ impl Grid {
         });
     }
 
-    fn dir_to_arrow(&self) -> &str {
-        match self.direction {
+    fn dir_to_arrow(&self, direction: (HDirection, VDirection)) -> &str {
+        match direction {
             (HDirection::None, VDirection::Up) => "up",
             (HDirection::None, VDirection::Down) => "down",
             (HDirection::Right, VDirection::None) => "right",

@@ -9,9 +9,9 @@ pub enum Cell {
 }
 
 pub struct Environment {
-    pub width: u32,
-    pub height: u32,
-    pub cells: Vec<Cell>,
+    pub(crate) width: u32,
+    pub(crate) height: u32,
+    pub(crate) cells: Vec<Cell>,
 }
 
 impl Environment {

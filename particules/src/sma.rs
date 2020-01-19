@@ -8,6 +8,7 @@ pub struct Sma {
 }
 
 impl Sma {
+    /// Update environment cells according to agent positions
     pub fn draw_all(&mut self) {
         for agent in &mut self.agents {
             agent.draw(&mut self.env)
@@ -15,17 +16,20 @@ impl Sma {
     }
 
     pub fn tick(&mut self) {
+        self.shuffle_agents();
+        // Update all agent positions sequentialy
+        for agent in &mut self.agents {
+            agent.update(&mut self.env)
+        }
+    }
+
+    pub fn shuffle_agents(&mut self) {
         // Randomize agents order each turn
         let mut agents = &mut self.agents;
         let slice: &mut [Agent] = &mut agents;
         slice.shuffle(&mut thread_rng());
 
         self.agents = slice.into();
-
-        // Update all agent positions sequentialy
-        for agent in &mut self.agents {
-            agent.update(&mut self.env)
-        }
     }
 
     pub fn new(height: u32, width: u32) -> Sma {
