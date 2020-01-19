@@ -2,12 +2,15 @@ pub mod agent;
 pub mod environment;
 pub mod sma;
 
-use agent::Agent;
-
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Direction {
     pub x: HDirection,
     pub y: VDirection,
+}
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Point {
+    pub x: i32,
+    pub y: i32,
 }
 
 impl Direction {

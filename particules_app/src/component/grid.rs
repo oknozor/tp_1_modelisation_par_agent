@@ -1,7 +1,9 @@
+use log::trace;
 use particules::agent::Agent;
 use particules::sma::Sma;
 use particules::Direction;
 use particules::HDirection;
+use particules::Point;
 use particules::VDirection;
 
 use std::time::Duration;
@@ -31,14 +33,14 @@ pub struct Grid {
 
 #[derive(Properties, Clone)]
 pub struct Props {
-    pub width: u32,
-    pub height: u32,
+    pub width: i32,
+    pub height: i32,
     pub agents: Vec<Agent>,
 }
 
 pub enum Msg {
     Play,
-    AddAgent((u32, u32)),
+    AddAgent((i32, i32)),
     Clear,
     Step,
     Tick,
@@ -85,7 +87,7 @@ impl Component for Grid {
                 } else {
                     self.error = "Please chose a direction".into()
                 }
-                return true;
+                return false;
             }
             Msg::Play => {
                 self.active = !self.active;
@@ -94,7 +96,7 @@ impl Component for Grid {
             Msg::Clear => {
                 self.active = false;
                 self.clear_filled_cells();
-                self.sma.agents = vec![];
+                self.sma = Sma::new(self.props.width, self.props.height);
                 return true;
             }
             Msg::Step => {
@@ -163,20 +165,20 @@ impl Component for Grid {
 }
 
 impl Grid {
-    fn view_row(&self, y: u32) -> Html {
+    fn view_row(&self, y: i32) -> Html {
         html! {
             <div class=("row")>
                 {for (0..self.props.width).map(|x| {
-                    self.view_cell(x, y)
+                    self.view_cell(Point {x, y})
                 })}
             </div>
         }
     }
 
-    fn view_cell(&self, x: u32, y: u32) -> Html {
-        let idx = self.sma.get_index(x, y);
+    fn view_cell(&self, point: Point) -> Html {
+        let idx = self.sma.get_index(point);
         html! {
-            <CellComponent x={x} y ={y} ref=self.refs[idx].clone() on_click=self.link.callback(Msg::AddAgent)/>
+            <CellComponent x={point.x} y ={point.y} ref=self.refs[idx].clone() on_click=self.link.callback(Msg::AddAgent)/>
         }
     }
 
@@ -196,8 +198,8 @@ impl Grid {
         html! {
             <div class ="row">
                 {idx}
-                {"| \tx : "} {agent.x}
-                {"\ty : "} {agent.y}
+                {"| \tx : "} {agent.coordinate.x}
+                {"\ty : "} {agent.coordinate.y}
                 {"\tcollsion : "} {agent.collision}
                 {"\t direction : "} <i class={self.dir_to_arrow(agent.direction)}></i>
             </div>
@@ -214,12 +216,12 @@ impl Grid {
     }
 
     fn clear_filled_cells(&mut self) {
-        self.sma.agents.iter().for_each(|agent| {
-            if let Some(cell) = self.refs[self.sma.get_index(agent.borrow().x, agent.borrow().y)]
-                .try_into::<Element>()
-            {
+        self.refs.iter().for_each(|cell_ref| {
+            if let Some(cell) = cell_ref.try_into::<Element>() {
                 cell.set_attribute("class", &format!("cell {}", Color::None.as_str()))
-                    .expect(":(");
+                    .unwrap_or_else(|_| {
+                        trace!("Something went wrong updating html refs, please refresh the page")
+                    })
             }
         });
     }
@@ -228,7 +230,7 @@ impl Grid {
         self.sma.agents.iter().for_each(|agent| {
             let color = Color::from(agent.borrow().collision);
 
-            let idx = self.sma.get_index(agent.borrow().x, agent.borrow().y);
+            let idx = self.sma.get_index(agent.borrow().coordinate);
 
             if let Some(cell) = self.refs[idx].try_into::<Element>() {
                 cell.set_attribute("class", &format!("cell {}", color.as_str()))

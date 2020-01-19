@@ -1,15 +1,15 @@
+use super::Point;
 use crate::agent::Agent;
 use crate::environment::Cell;
 use crate::environment::Environment;
 use rand::{seq::SliceRandom, thread_rng};
-use std::rc::Rc;
 use std::cell::RefCell;
+use std::rc::Rc;
 
 type AgentRef = Rc<RefCell<Agent>>;
 pub struct Sma {
     pub env: Environment,
     pub agents: Vec<AgentRef>,
-    pub agents_waiting: Vec<AgentRef>,
 }
 
 impl Sma {
@@ -37,12 +37,11 @@ impl Sma {
         self.agents = slice.into();
     }
 
-    pub fn new(height: u32, width: u32) -> Sma {
+    pub fn new(height: i32, width: i32) -> Sma {
         let env = Environment::new(height, width);
         Sma {
             env,
             agents: vec![],
-            agents_waiting: vec![],
         }
     }
 
@@ -50,26 +49,27 @@ impl Sma {
         let already_filled = self
             .agents
             .iter()
-            .find(|agent_in_memory| (agent_in_memory.borrow().x, agent_in_memory.borrow().y) == (agent.x, agent.y));
+            .find(|agent_in_memory| (agent_in_memory.borrow().coordinate) == agent.coordinate);
 
         if let None = already_filled {
             self.agents.push(Rc::new(RefCell::new(agent)));
         }
     }
 
+
     pub fn get_state(&self) -> &Vec<Cell> {
         &self.env.cells
     }
 
-    pub fn height(&self) -> u32 {
+    pub fn height(&self) -> i32 {
         self.env.height
     }
 
-    pub fn width(&self) -> u32 {
+    pub fn width(&self) -> i32 {
         self.env.width
     }
 
-    pub fn get_index(&self, x: u32, y: u32) -> usize {
-        self.env.get_index(x, y)
+    pub fn get_index(&self, point: Point) -> usize {
+        self.env.get_index(point)
     }
 }

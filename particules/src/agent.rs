@@ -1,5 +1,6 @@
 use super::Direction;
 use super::HDirection;
+use super::Point;
 use super::VDirection;
 use crate::environment::Cell;
 use crate::environment::Environment;
@@ -10,8 +11,7 @@ use std::rc::Rc;
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Agent {
     pub direction: Direction,
-    pub x: u32,
-    pub y: u32,
+    pub coordinate: Point,
     pub collision: bool,
 }
 
@@ -23,17 +23,16 @@ enum Decision {
 
 impl Agent {
     pub fn update_env(&mut self, environment: &mut Environment) {
-        let idx = environment.get_index(self.x, self.y);
+        let idx = environment.get_index(self.coordinate);
         environment.cells[idx] = Cell::Filled(Rc::new(RefCell::new(self.clone())));
     }
 
     pub fn clear(&mut self, environment: &mut Environment) {
-        let idx = environment.get_index(self.x, self.y);
+        let idx = environment.get_index(self.coordinate);
         environment.cells[idx] = Cell::Empty;
     }
 
     pub fn update(&mut self, environment: &mut Environment) {
-        self.collision = false;
         self.clear(environment);
 
         match self.decide(environment) {
@@ -50,18 +49,17 @@ impl Agent {
             Decision::KeepCourse => (),
         };
 
-        let (x_forward, y_forward) = self.look_ahead();
-        self.x = x_forward;
-        self.y = y_forward;
+        let forward_position = self.look_ahead();
+        self.coordinate= forward_position;
         self.collision(environment);
         self.update_env(environment);
     }
 
     fn collision(&mut self, environment: &Environment) {
-        let on_edge_right = self.x == environment.width - 1;
-        let on_edge_left = self.x == 0;
-        let on_edge_top = self.y == environment.height - 1;
-        let on_edge_bottom = self.y == 0;
+        let on_edge_right = self.coordinate.x == environment.width - 1;
+        let on_edge_left = self.coordinate.x == 0;
+        let on_edge_top = self.coordinate.y == environment.height - 1;
+        let on_edge_bottom = self.coordinate.y == 0;
 
         let wall_collision = match (self.direction.x, self.direction.y) {
             (HDirection::Right, VDirection::None) => on_edge_right,
@@ -76,11 +74,13 @@ impl Agent {
         };
 
         if !wall_collision {
-            let (x_forward, y_forward)= self.look_ahead();
-            let idx = environment.get_index(x_forward, y_forward);
+            let forward_position= self.look_ahead();
+            let idx = environment.get_index(forward_position);
 
             if let Some(Cell::Filled(_)) = environment.cells.get(idx) {
                 self.collision = true;
+            } else {
+                self.collision = false;
             }
         } else {
             self.collision = true;
@@ -88,13 +88,13 @@ impl Agent {
     }
 
     fn decide(&mut self, environment: &mut Environment) -> Decision {
-        let (x_forward, y_forward) = self.look_ahead();
+        let forward_position = self.look_ahead();
 
-        let out_of_bound_x = self.x == 0 || environment.is_out_of_bound_x(x_forward);
-        let out_of_bound_y = self.y == 0 || environment.is_out_of_bound_y(y_forward);
+        let out_of_bound_x = environment.is_out_of_bound_x(forward_position.x);
+        let out_of_bound_y = environment.is_out_of_bound_y(forward_position.y);
 
         if !out_of_bound_x && !out_of_bound_y {
-            let forward_idx = environment.get_index(x_forward, y_forward);
+            let forward_idx = environment.get_index(forward_position);
             let cell_forward = environment.cells[forward_idx].clone();
 
             return match cell_forward {
@@ -121,26 +121,25 @@ impl Agent {
         }
     }
 
-    fn look_ahead(&self) -> (u32, u32) {
-        (
-            match self.direction.x {
-                HDirection::Right => self.x + 1,
-                HDirection::Left if self.x != 0 => self.x - 1,
-                _ => self.x,
+    fn look_ahead(&self) -> Point {
+        Point {
+            x: match self.direction.x {
+                HDirection::Right => self.coordinate.x + 1,
+                HDirection::Left => self.coordinate.x - 1,
+                _ => self.coordinate.x,
             },
-            match self.direction.y {
-                VDirection::Up if self.y != 0 => self.y - 1,
-                VDirection::Down => self.y + 1,
-                _ => self.y,
+            y: match self.direction.y {
+                VDirection::Up => self.coordinate.y - 1,
+                VDirection::Down => self.coordinate.y + 1,
+                _ => self.coordinate.y,
             },
-        ) as (u32, u32)
+        }
     }
 
-    pub fn new(x: u32, y: u32, direction: Direction) -> Agent {
+    pub fn new(x: i32, y: i32, direction: Direction) -> Agent {
         Agent {
             direction,
-            x,
-            y,
+            coordinate: Point { x, y },
             collision: false,
         }
     }

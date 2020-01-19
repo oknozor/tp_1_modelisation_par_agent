@@ -8,11 +8,11 @@ pub struct CellComponent {
 #[derive(Properties, Clone)]
 pub struct Props {
     #[props(required)]
-    pub x: u32,
+    pub x: i32,
     #[props(required)]
-    pub y: u32,
+    pub y: i32,
     #[props(required)]
-    pub on_click: Callback<(u32, u32)>,
+    pub on_click: Callback<(i32, i32)>,
 }
 
 pub enum Msg {

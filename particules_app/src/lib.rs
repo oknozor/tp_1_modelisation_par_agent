@@ -1,13 +1,11 @@
 #![recursion_limit = "1024"]
-
-use particules::agent::Agent;
 use yew::{html, Component, ComponentLink, Html, InputData, ShouldRender};
 mod component;
 use component::grid::Grid;
 pub struct Model {
     link: ComponentLink<Self>,
-    height: u32,
-    width: u32,
+    height: i32,
+    width: i32,
     error: String,
     redraw: bool,
 }
@@ -33,7 +31,7 @@ impl Component for Model {
     fn update(&mut self, msg: Self::Message) -> ShouldRender {
         match msg {
             Msg::UpdateHeight(value) => {
-                match value.parse::<u32>() {
+                match value.parse::<i32>() {
                     Ok(value) => {
                         self.error = "".into();
                         self.height = value;
@@ -43,7 +41,7 @@ impl Component for Model {
                 false
             }
             Msg::UpdateWidth(value) => {
-                match value.parse::<u32>() {
+                match value.parse::<i32>() {
                     Ok(value) => {
                         self.error = "".into();
                         self.width = value;
