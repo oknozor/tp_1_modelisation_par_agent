@@ -1,5 +1,6 @@
 use particules::agent::Agent;
 use particules::sma::Sma;
+use particules::Direction;
 use particules::HDirection;
 use particules::VDirection;
 
@@ -20,7 +21,7 @@ pub struct Grid {
     link: ComponentLink<Self>,
     props: Props,
     sma: Sma,
-    direction: (HDirection, VDirection),
+    direction: Direction,
     active: bool,
     error: String,
     refs: Vec<NodeRef>,
@@ -41,7 +42,7 @@ pub enum Msg {
     Clear,
     Step,
     Tick,
-    ChangeDir((HDirection, VDirection)),
+    ChangeDir(Direction),
 }
 
 impl Component for Grid {
@@ -54,7 +55,7 @@ impl Component for Grid {
         let handle = interval.spawn(Duration::from_millis(50), callback);
         let sma = Sma::new(props.width, props.height);
         let refs = Self::init_refs(&sma);
-        let direction = (HDirection::Right, VDirection::None);
+        let direction = Direction::new(HDirection::Right, VDirection::None);
 
         Grid {
             link,
@@ -76,14 +77,8 @@ impl Component for Grid {
     fn update(&mut self, msg: Self::Message) -> ShouldRender {
         match msg {
             Msg::AddAgent((x, y)) => {
-                if self.direction != (HDirection::None, VDirection::None) {
-                    let agent = Agent {
-                        x,
-                        y,
-                        h_direction: self.direction.0,
-                        v_direction: self.direction.1,
-                        collision: false,
-                    };
+                if self.direction != Direction::new(HDirection::None, VDirection::None) {
+                    let agent = Agent::new(x, y, self.direction);
 
                     self.sma.add_agent(agent);
                     self.draw_agents();
@@ -137,30 +132,30 @@ impl Component for Grid {
                     </div>
                 <div class="">
                     <div class="row">
-                        <button class="" onclick=self.link.callback(|_| Msg::ChangeDir((HDirection::Left, VDirection::Up)))><i class="left-up"></i></button>
-                        <button class="" onclick=self.link.callback(|_| Msg::ChangeDir((HDirection::None, VDirection::Up)))><i class="up"></i></button>
-                        <button class="" onclick=self.link.callback(|_| Msg::ChangeDir((HDirection::Right, VDirection::Up)))><i class="right-up"></i></button>
+                        <button class="" onclick=self.link.callback(|_| Msg::ChangeDir(Direction::new(HDirection::Left, VDirection::Up)))><i class="left-up"></i></button>
+                        <button class="" onclick=self.link.callback(|_| Msg::ChangeDir(Direction::new(HDirection::None, VDirection::Up)))><i class="up"></i></button>
+                        <button class="" onclick=self.link.callback(|_| Msg::ChangeDir(Direction::new(HDirection::Right, VDirection::Up)))><i class="right-up"></i></button>
                     </div>
                     <div class="row">
-                        <button class="" onclick=self.link.callback(|_| Msg::ChangeDir((HDirection::Left, VDirection::None)))><i class="left"></i></button>
+                        <button class="" onclick=self.link.callback(|_| Msg::ChangeDir(Direction::new(HDirection::Left, VDirection::None)))><i class="left"></i></button>
                         <span class="dot"></span>
-                        <button class="" onclick=self.link.callback(|_| Msg::ChangeDir((HDirection::Right, VDirection::None)))><i class="right"></i></button>
+                        <button class="" onclick=self.link.callback(|_| Msg::ChangeDir(Direction::new(HDirection::Right, VDirection::None)))><i class="right"></i></button>
                     </div>
                     <div class="row">
-                    <button class="" onclick=self.link.callback(|_| Msg::ChangeDir((HDirection::Left, VDirection::Down)))><i class="left-down"></i></button>
-                    <button class="" onclick=self.link.callback(|_| Msg::ChangeDir((HDirection::None, VDirection::Down)))><i class="down"></i></button>
-                    <button class="" onclick=self.link.callback(|_| Msg::ChangeDir((HDirection::Right, VDirection::Down)))><i class="right-down"></i></button>
+                    <button class="" onclick=self.link.callback(|_| Msg::ChangeDir(Direction::new(HDirection::Left, VDirection::Down)))><i class="left-down"></i></button>
+                    <button class="" onclick=self.link.callback(|_| Msg::ChangeDir(Direction::new(HDirection::None, VDirection::Down)))><i class="down"></i></button>
+                    <button class="" onclick=self.link.callback(|_| Msg::ChangeDir(Direction::new(HDirection::Right, VDirection::Down)))><i class="right-down"></i></button>
                     </div>
                 </div>
             </div>
             <div>
                 <i class={self.dir_to_arrow(self.direction)}> </i>
             </div>
-            <div>
-                {self.view_debug()}
-            </div>
             <div class="particules">
                 {(0..self.props.width).map(|row| self.view_row(row)).collect::<Html>()}
+            </div>
+            <div>
+                {self.view_debug()}
             </div>
             </section>
         }
@@ -168,11 +163,11 @@ impl Component for Grid {
 }
 
 impl Grid {
-    fn view_row(&self, row: u32) -> Html {
+    fn view_row(&self, y: u32) -> Html {
         html! {
             <div class=("row")>
-                {for (0..self.props.height).map(|column| {
-                    self.view_cell(row, column)
+                {for (0..self.props.width).map(|x| {
+                    self.view_cell(x, y)
                 })}
             </div>
         }
@@ -189,8 +184,8 @@ impl Grid {
         html! {
             <div>
             {
-                self.sma.agents.iter().enumerate().map(|agent| {
-                    {self.agent_info(agent)}
+                self.sma.agents.iter().enumerate().map(|(idx, agent)| {
+                    {self.agent_info((idx, &agent.borrow()))}
                 }).collect::<Html>()
             }
             </div>
@@ -204,7 +199,7 @@ impl Grid {
                 {"| \tx : "} {agent.x}
                 {"\ty : "} {agent.y}
                 {"\tcollsion : "} {agent.collision}
-                {"\t direction : "} <i class={self.dir_to_arrow((agent.h_direction, agent.v_direction))}></i>
+                {"\t direction : "} <i class={self.dir_to_arrow(agent.direction)}></i>
             </div>
         }
     }
@@ -220,8 +215,8 @@ impl Grid {
 
     fn clear_filled_cells(&mut self) {
         self.sma.agents.iter().for_each(|agent| {
-            if let Some(cell) =
-                self.refs[self.sma.get_index(agent.x, agent.y)].try_into::<Element>()
+            if let Some(cell) = self.refs[self.sma.get_index(agent.borrow().x, agent.borrow().y)]
+                .try_into::<Element>()
             {
                 cell.set_attribute("class", &format!("cell {}", Color::None.as_str()))
                     .expect(":(");
@@ -231,9 +226,9 @@ impl Grid {
 
     fn draw_agents(&mut self) {
         self.sma.agents.iter().for_each(|agent| {
-            let color = Color::from(agent.collision);
+            let color = Color::from(agent.borrow().collision);
 
-            let idx = self.sma.get_index(agent.x, agent.y);
+            let idx = self.sma.get_index(agent.borrow().x, agent.borrow().y);
 
             if let Some(cell) = self.refs[idx].try_into::<Element>() {
                 cell.set_attribute("class", &format!("cell {}", color.as_str()))
@@ -242,8 +237,8 @@ impl Grid {
         });
     }
 
-    fn dir_to_arrow(&self, direction: (HDirection, VDirection)) -> &str {
-        match direction {
+    fn dir_to_arrow(&self, direction: Direction) -> &str {
+        match (direction.x, direction.y) {
             (HDirection::None, VDirection::Up) => "up",
             (HDirection::None, VDirection::Down) => "down",
             (HDirection::Right, VDirection::None) => "right",

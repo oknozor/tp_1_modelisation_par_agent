@@ -2,16 +2,21 @@ use crate::agent::Agent;
 use crate::environment::Cell;
 use crate::environment::Environment;
 use rand::{seq::SliceRandom, thread_rng};
+use std::rc::Rc;
+use std::cell::RefCell;
+
+type AgentRef = Rc<RefCell<Agent>>;
 pub struct Sma {
     pub env: Environment,
-    pub agents: Vec<Agent>,
+    pub agents: Vec<AgentRef>,
+    pub agents_waiting: Vec<AgentRef>,
 }
 
 impl Sma {
     /// Update environment cells according to agent positions
     pub fn draw_all(&mut self) {
         for agent in &mut self.agents {
-            agent.draw(&mut self.env)
+            agent.borrow_mut().update_env(&mut self.env)
         }
     }
 
@@ -19,14 +24,14 @@ impl Sma {
         self.shuffle_agents();
         // Update all agent positions sequentialy
         for agent in &mut self.agents {
-            agent.update(&mut self.env)
+            agent.borrow_mut().update(&mut self.env)
         }
     }
 
     pub fn shuffle_agents(&mut self) {
         // Randomize agents order each turn
         let mut agents = &mut self.agents;
-        let slice: &mut [Agent] = &mut agents;
+        let slice: &mut [AgentRef] = &mut agents;
         slice.shuffle(&mut thread_rng());
 
         self.agents = slice.into();
@@ -37,6 +42,7 @@ impl Sma {
         Sma {
             env,
             agents: vec![],
+            agents_waiting: vec![],
         }
     }
 
@@ -44,10 +50,10 @@ impl Sma {
         let already_filled = self
             .agents
             .iter()
-            .find(|agent_in_memory| (agent_in_memory.x, agent_in_memory.y) == (agent.x, agent.y));
+            .find(|agent_in_memory| (agent_in_memory.borrow().x, agent_in_memory.borrow().y) == (agent.x, agent.y));
 
         if let None = already_filled {
-            self.agents.push(agent);
+            self.agents.push(Rc::new(RefCell::new(agent)));
         }
     }
 

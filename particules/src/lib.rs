@@ -5,6 +5,18 @@ pub mod sma;
 use agent::Agent;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Direction {
+    pub x: HDirection,
+    pub y: VDirection,
+}
+
+impl Direction {
+    pub fn new(x: HDirection, y: VDirection) -> Direction {
+        Direction { x, y }
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum HDirection {
     None,
     Right,

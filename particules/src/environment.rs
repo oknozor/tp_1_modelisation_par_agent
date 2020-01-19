@@ -15,7 +15,7 @@ pub struct Environment {
 }
 
 impl Environment {
-    pub fn is_out_of_bound_v(&self, y: u32) -> bool {
+    pub fn is_out_of_bound_y(&self, y: u32) -> bool {
         if y > self.height - 1 {
             true
         } else {
@@ -23,7 +23,7 @@ impl Environment {
         }
     }
 
-    pub fn is_out_of_bound_h(&self, x: u32) -> bool {
+    pub fn is_out_of_bound_x(&self, x: u32) -> bool {
         if x > self.width - 1 {
             true
         } else {
