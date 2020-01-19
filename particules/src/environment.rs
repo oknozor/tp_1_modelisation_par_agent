@@ -50,25 +50,3 @@ impl Environment {
         }
     }
 }
-
-#[cfg(test)]
-pub mod test {
-    use crate::environment::Environment;
-
-    #[test]
-    fn should_create_env_filled_with_empty_cells() {
-        let env = Environment::new(5, 5);
-
-        assert_eq!(env.cells.len(), 25);
-    }
-    #[test]
-    fn should_return_out_of_bound() {
-        let env = Environment::new(5, 5);
-
-        assert!(env.is_out_of_bound_h(0));
-        assert!(env.is_out_of_bound_v(0));
-
-        assert!(env.is_out_of_bound_h(5));
-        assert!(env.is_out_of_bound_v(5));
-    }
-}

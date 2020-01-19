@@ -34,7 +34,6 @@ impl Agent {
 
     pub fn update(&mut self, environment: &mut Environment) {
         self.collision = false;
-        self.update_env(environment);
         self.clear(environment);
 
         match self.decide(environment) {
@@ -43,10 +42,10 @@ impl Agent {
                 self.direction.x = direction.x
             }
             Decision::ChangeCourseCollision(agent) => {
-                self.collision(environment);
                 let direction = self.direction;
                 self.direction = agent.borrow().direction;
                 agent.borrow_mut().direction = direction;
+                agent.borrow_mut().collision = true;
             }
             Decision::KeepCourse => (),
         };
@@ -55,6 +54,7 @@ impl Agent {
         self.x = x_forward;
         self.y = y_forward;
         self.collision(environment);
+        self.update_env(environment);
     }
 
     fn collision(&mut self, environment: &Environment) {
@@ -63,7 +63,7 @@ impl Agent {
         let on_edge_top = self.y == environment.height - 1;
         let on_edge_bottom = self.y == 0;
 
-        self.collision = match (self.direction.x, self.direction.y) {
+        let wall_collision = match (self.direction.x, self.direction.y) {
             (HDirection::Right, VDirection::None) => on_edge_right,
             (HDirection::Right, VDirection::Up) => on_edge_right || on_edge_bottom,
             (HDirection::Right, VDirection::Down) => on_edge_right || on_edge_top,
@@ -74,6 +74,17 @@ impl Agent {
             (HDirection::None, VDirection::Down) => on_edge_top,
             (_, _) => false,
         };
+
+        if !wall_collision {
+            let (x_forward, y_forward)= self.look_ahead();
+            let idx = environment.get_index(x_forward, y_forward);
+
+            if let Some(Cell::Filled(_)) = environment.cells.get(idx) {
+                self.collision = true;
+            }
+        } else {
+            self.collision = true;
+        }
     }
 
     fn decide(&mut self, environment: &mut Environment) -> Decision {
