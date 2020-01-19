@@ -131,7 +131,7 @@ impl Component for Grid {
                         <button class="game-button" onclick=self.link.callback(|_| Msg::Play)>{ if !self.active {{"Play"}} else {{"Pause"}} }</button>
                         <button class="game-button" onclick=self.link.callback(|_| Msg::Clear)>{ "Clear" }</button>
                         <button class="game-button" onclick=self.link.callback(|_| Msg::Step)>{ "Step" }</button>
-                    </div>
+                </div>
                 <div class="">
                     <div class="row">
                         <button class="" onclick=self.link.callback(|_| Msg::ChangeDir(Direction::new(HDirection::Left, VDirection::Up)))><i class="left-up"></i></button>
