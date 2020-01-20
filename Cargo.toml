@@ -3,4 +3,5 @@
 members = [
     "particules",
     "particules_app",
+    "particules_desktop",
 ]

@@ -38,7 +38,7 @@ impl Sma {
     }
 
     pub fn new(height: i32, width: i32) -> Sma {
-        let env = Environment::new(height, width);
+        let env = Environment::new(height, width, false);
         Sma {
             env,
             agents: vec![],
@@ -71,5 +71,9 @@ impl Sma {
 
     pub fn get_index(&self, point: Point) -> usize {
         self.env.get_index(point)
+    }
+
+    pub fn set_borderless(&mut self, value: bool) {
+        self.env.borderless = value;
     }
 }

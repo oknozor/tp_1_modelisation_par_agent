@@ -25,6 +25,7 @@ pub struct Grid {
     sma: Sma,
     direction: Direction,
     active: bool,
+    borderless: bool,
     error: String,
     refs: Vec<NodeRef>,
     #[allow(unused)]
@@ -44,6 +45,7 @@ pub enum Msg {
     Clear,
     Step,
     Tick,
+    Borderless,
     ChangeDir(Direction),
 }
 
@@ -54,7 +56,7 @@ impl Component for Grid {
     fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
         let callback = link.callback(|_| Msg::Tick);
         let mut interval = IntervalService::new();
-        let handle = interval.spawn(Duration::from_millis(50), callback);
+        let handle = interval.spawn(Duration::from_millis(200), callback);
         let sma = Sma::new(props.width, props.height);
         let refs = Self::init_refs(&sma);
         let direction = Direction::new(HDirection::Right, VDirection::None);
@@ -67,6 +69,7 @@ impl Component for Grid {
             error: "".into(),
             refs,
             active: false,
+            borderless: false,
             job: Box::new(handle),
         }
     }
@@ -119,6 +122,10 @@ impl Component for Grid {
                 self.direction = dir;
                 return true;
             }
+            Msg::Borderless => {
+                self.sma.set_borderless(!self.borderless);
+                return true;
+            }
         }
         false
     }
@@ -131,6 +138,7 @@ impl Component for Grid {
                         <button class="game-button" onclick=self.link.callback(|_| Msg::Play)>{ if !self.active {{"Play"}} else {{"Pause"}} }</button>
                         <button class="game-button" onclick=self.link.callback(|_| Msg::Clear)>{ "Clear" }</button>
                         <button class="game-button" onclick=self.link.callback(|_| Msg::Step)>{ "Step" }</button>
+                        <button class="game-button" onclick=self.link.callback(|_| Msg::Borderless)>{ "Borderless" }</button>
                 </div>
                 <div class="">
                     <div class="row">

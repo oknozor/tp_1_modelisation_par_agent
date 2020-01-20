@@ -40,17 +40,27 @@ impl Agent {
                 self.direction.y = direction.y;
                 self.direction.x = direction.x
             }
-            Decision::ChangeCourseCollision(agent) => {
+            Decision::ChangeCourseCollision(agent) if !environment.borderless => {
                 let direction = self.direction;
                 self.direction = agent.borrow().direction;
                 agent.borrow_mut().direction = direction;
                 agent.borrow_mut().collision = true;
             }
-            Decision::KeepCourse => (),
+            _ => (),
         };
 
-        let forward_position = self.look_ahead();
-        self.coordinate= forward_position;
+        let forward_position = if environment.borderless {
+            self.look_ahead_borderless(environment.width, environment.height)
+        } else {
+            self.look_ahead()
+        };
+
+        // Guard cell overlap
+        match environment.get_cell(forward_position) {
+            Some(Cell::Empty) => self.coordinate = forward_position,
+            _ => (),
+        };
+
         self.collision(environment);
         self.update_env(environment);
     }
@@ -61,20 +71,29 @@ impl Agent {
         let on_edge_top = self.coordinate.y == environment.height - 1;
         let on_edge_bottom = self.coordinate.y == 0;
 
-        let wall_collision = match (self.direction.x, self.direction.y) {
-            (HDirection::Right, VDirection::None) => on_edge_right,
-            (HDirection::Right, VDirection::Up) => on_edge_right || on_edge_bottom,
-            (HDirection::Right, VDirection::Down) => on_edge_right || on_edge_top,
-            (HDirection::Left, VDirection::None) => on_edge_left,
-            (HDirection::Left, VDirection::Up) => on_edge_left || on_edge_bottom,
-            (HDirection::Left, VDirection::Down) => on_edge_left || on_edge_top,
-            (HDirection::None, VDirection::Up) => on_edge_bottom,
-            (HDirection::None, VDirection::Down) => on_edge_top,
-            (_, _) => false,
+        let wall_collision = if environment.borderless {
+            false
+        } else {
+            match (self.direction.x, self.direction.y) {
+                (HDirection::Right, VDirection::None) => on_edge_right,
+                (HDirection::Right, VDirection::Up) => on_edge_right || on_edge_bottom,
+                (HDirection::Right, VDirection::Down) => on_edge_right || on_edge_top,
+                (HDirection::Left, VDirection::None) => on_edge_left,
+                (HDirection::Left, VDirection::Up) => on_edge_left || on_edge_bottom,
+                (HDirection::Left, VDirection::Down) => on_edge_left || on_edge_top,
+                (HDirection::None, VDirection::Up) => on_edge_bottom,
+                (HDirection::None, VDirection::Down) => on_edge_top,
+                (_, _) => false,
+            }
         };
 
         if !wall_collision {
-            let forward_position= self.look_ahead();
+            let forward_position = if environment.borderless {
+                self.look_ahead_borderless(environment.width, environment.height)
+            } else {
+                self.look_ahead()
+            };
+
             let idx = environment.get_index(forward_position);
 
             if let Some(Cell::Filled(_)) = environment.cells.get(idx) {
@@ -88,7 +107,11 @@ impl Agent {
     }
 
     fn decide(&mut self, environment: &mut Environment) -> Decision {
-        let forward_position = self.look_ahead();
+        let forward_position = if environment.borderless {
+            self.look_ahead_borderless(environment.width, environment.height)
+        } else {
+            self.look_ahead()
+        };
 
         let out_of_bound_x = environment.is_out_of_bound_x(forward_position.x);
         let out_of_bound_y = environment.is_out_of_bound_y(forward_position.y);
@@ -131,6 +154,45 @@ impl Agent {
             y: match self.direction.y {
                 VDirection::Up => self.coordinate.y - 1,
                 VDirection::Down => self.coordinate.y + 1,
+                _ => self.coordinate.y,
+            },
+        }
+    }
+
+    fn look_ahead_borderless(&self, width: i32, height: i32) -> Point {
+        Point {
+            x: match self.direction.x {
+                HDirection::Right => {
+                    if self.coordinate.x + 1 > width - 1 {
+                        0
+                    } else {
+                        self.coordinate.x + 1
+                    }
+                }
+                HDirection::Left => {
+                    if self.coordinate.x - 1 < 0 {
+                        width - 1
+                    } else {
+                        self.coordinate.x - 1
+                    }
+                }
+                _ => self.coordinate.x,
+            },
+            y: match self.direction.y {
+                VDirection::Up => {
+                    if self.coordinate.y - 1 < 0 {
+                        height - 1
+                    } else {
+                        self.coordinate.y - 1
+                    }
+                }
+                VDirection::Down => {
+                    if self.coordinate.y + 1 > height -  1 {
+                        0
+                    } else {
+                        self.coordinate.y + 1
+                    }
+                }
                 _ => self.coordinate.y,
             },
         }
