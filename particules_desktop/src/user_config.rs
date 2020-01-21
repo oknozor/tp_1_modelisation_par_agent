@@ -4,4 +4,6 @@ pub struct Config {
     pub y: f32,
     pub cell_size: f32,
     pub agents: u32,
+    pub density: u8,
+    pub grid: bool,
 }

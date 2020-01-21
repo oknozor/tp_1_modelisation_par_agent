@@ -5,17 +5,12 @@ extern crate serde;
 #[macro_use]
 extern crate serde_derive;
 
-use std::env;
 use std::fs::File;
 use std::io::prelude::*;
 
 use nannou::prelude::*;
 
-use particules::agent::Agent;
 use particules::sma::Sma;
-use particules::Direction;
-use particules::HDirection;
-use particules::VDirection;
 
 mod user_config;
 
@@ -29,14 +24,11 @@ lazy_static! {
 }
 
 fn main() {
-    let args: Vec<String> = env::args().collect();
-
     nannou::app(model).update(update).run();
 }
 
 #[derive(Clone)]
 struct Cell {
-    w: f32,
     state: CellState,
     previous: Option<(usize, usize)>,
 }
@@ -49,10 +41,9 @@ pub enum CellState {
 }
 
 impl Cell {
-    fn new(w: f32, state: CellState) -> Self {
-        let w = w;
+    fn new(state: CellState) -> Self {
         let previous = None;
-        Cell { w, state, previous }
+        Cell { state, previous }
     }
 
     fn display(&self, draw: &app::Draw, x: f32, y: f32) {
@@ -62,16 +53,24 @@ impl Cell {
             CellState::Fill => rgb(0.0, 0.0, 0.0),
         };
 
-        draw.rect()
+        if CONFIG.grid {
+            draw.rect()
             .x_y(x, y)
-            .w_h(self.w, self.w)
+            .w_h(CONFIG.cell_size, CONFIG.cell_size)
             .rgb(fill.red, fill.green, fill.blue)
             .stroke(rgb(0.0, 0.0, 0.0));
+        } else {
+            draw.rect()
+            .x_y(x, y)
+            .w_h(CONFIG.cell_size, CONFIG.cell_size)
+            .rgb(fill.red, fill.green, fill.blue);
+        }
+
+
     }
 }
 
 struct Grid {
-    w: usize,
     columns: usize,
     rows: usize,
     board: Vec<Vec<Cell>>,
@@ -79,14 +78,14 @@ struct Grid {
 }
 
 impl Grid {
-    fn new(rect: Rect, w: usize) -> Self {
-        let columns = rect.w() as usize / w;
-        let rows = rect.h() as usize / w;
+    fn new(rect: Rect) -> Self {
+        let columns = rect.w() as usize / CONFIG.cell_size as usize;
+        let rows = rect.h() as usize / CONFIG.cell_size as usize;
         //let mut board = vec![vec![Cell::new(w as f32); rows]; columns];
         let mut board: Vec<Vec<Cell>> = (0..columns)
             .map(|_| {
                 (0..rows)
-                    .map(|_| Cell::new(w as f32, CellState::Empty))
+                    .map(|_| Cell::new(CellState::Empty))
                     .collect()
             })
             .collect();
@@ -95,17 +94,9 @@ impl Grid {
 
         let mut sma = Sma::new(columns as i32, rows as i32);
 
-        sma.add_agent(Agent::new(
-            0,
-            0,
-            Direction {
-                x: HDirection::Right,
-                y: VDirection::Up,
-            },
-        ));
+        sma.gen_agents(CONFIG.density);
 
         let mut grid = Grid {
-            w,
             columns,
             rows,
             board,
@@ -119,7 +110,7 @@ impl Grid {
         self.board = (0..self.columns)
             .map(|_| {
                 (0..self.rows)
-                    .map(|_| Cell::new(self.w as f32, CellState::Empty))
+                    .map(|_| Cell::new(CellState::Empty))
                     .collect()
             })
             .collect();
@@ -146,9 +137,9 @@ impl Grid {
     fn display(&self, draw: &app::Draw, rect: &Rect) {
         for i in 0..self.columns {
             for j in 0..self.rows {
-                let x = (i * self.w) as f32 - rect.right() as f32;
-                let y = (j * self.w) as f32 - rect.top() as f32;
-                let offset = self.w as f32 / 2.0;
+                let x = (i * CONFIG.cell_size as usize) as f32 - rect.right() as f32;
+                let y = (j * CONFIG.cell_size as usize) as f32 - rect.top() as f32;
+                let offset = CONFIG.cell_size as f32 / 2.0;
                 self.board[i][j].display(&draw, x + offset, y + offset);
             }
         }
@@ -160,10 +151,9 @@ struct Model {
 }
 
 fn model(app: &App) -> Model {
-    let cell_w = CONFIG.cell_size;
     let h = CONFIG.y;
     let w = CONFIG.x;
-    let rect = Rect::from_w_h(w * cell_w, h * cell_w);
+    let rect = Rect::from_w_h(w * CONFIG.cell_size, h * CONFIG.cell_size);
     app.new_window()
         .with_maximized(true)
         .mouse_pressed(mouse_pressed)
@@ -172,7 +162,7 @@ fn model(app: &App) -> Model {
         .build()
         .unwrap();
 
-    let grid = Grid::new(rect, cell_w as usize);
+    let grid = Grid::new(rect);
     Model { grid }
 }
 
@@ -196,25 +186,9 @@ fn view(app: &App, m: &Model, frame: &Frame) {
     draw.to_frame(app, &frame).unwrap();
 }
 
-fn window_event(app: &App, model: &mut Model, event: WindowEvent) {
+fn window_event(_app: &App, _model: &mut Model, event: WindowEvent) {
     match event {
         KeyPressed(code) => println!("{:?}", code),
-        DroppedFile(path) => {
-            //            let rect = Rect::from_w_h(config.x as f32x * cell_w, config.x as f32 * cell_w);
-            //            let grid = Grid::new(rect);
-            //            let mut sma = Sma::new(config.y as i32, config.x as i32);
-            //
-            //            sma.add_agent(Agent::new(
-            //                0,
-            //                0,
-            //                Direction {
-            //                    x: HDirection::Right,
-            //                    y: VDirection::Up,
-            //                },
-            //            ));
-            //
-            //            model.grid = grid;
-        }
         _ => {}
     }
 }

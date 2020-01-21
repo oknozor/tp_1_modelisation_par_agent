@@ -1,10 +1,12 @@
 use super::AgentRef;
 use super::Direction;
+use super::HDirection;
 use super::Point;
+use super::VDirection;
 use crate::agent::Agent;
 use crate::environment::Cell;
 use crate::environment::Environment;
-use rand::{seq::SliceRandom, thread_rng};
+use rand::{seq::SliceRandom, thread_rng, Rng};
 use std::cell::RefCell;
 use std::rc::Rc;
 
@@ -39,7 +41,7 @@ impl Sma {
         self.agents = slice.into();
     }
 
-    pub fn add_agent(&mut self, coordinate: Point, direction: Direction) {
+    pub fn add_agent(&mut self, coordinate: Point, direction: Direction) -> Result<(), ()> {
         let already_filled = self
             .agents
             .iter()
@@ -60,6 +62,43 @@ impl Sma {
             self.env
                 .set_cell(coordinate, Cell::Filled(agent_ref))
                 .unwrap();
+                Ok(())
+        } else {
+            Err(())
+        }
+    }
+
+    pub fn gen_agents(&mut self, density: u8) {
+        if density > 100 {
+            panic!("Density must be inferior or equal to 100");
+        }
+
+        let size = self.env.height * self.env.width;
+        let size = (size / 100) * density as i32;
+        let mut rng = thread_rng();
+
+        let mut count =  0;
+        while count <  size {
+            let pick = rng.gen_range(0, 100);
+            if pick <= density {
+                let x = rng.gen_range(0, self.env.height);
+                let y = rng.gen_range(0, self.env.width);
+                let x_dir = match rng.gen_range(0, 2) {
+                    0 => HDirection::Right,
+                    1 => HDirection::Left,
+                    _ => HDirection::None,
+                };
+
+                let y_dir = match rng.gen_range(0, 2) {
+                    0 => VDirection::Up,
+                    1 => VDirection::Down,
+                    _ => VDirection::None,
+                };
+
+                if let Ok(()) = self.add_agent(Point { x, y }, Direction { x: x_dir, y: y_dir }) {
+                    count+=1;
+                }
+            }
         }
     }
 
