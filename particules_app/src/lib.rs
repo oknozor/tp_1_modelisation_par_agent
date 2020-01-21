@@ -1,9 +1,9 @@
 #![recursion_limit = "1024"]
-use yew::{html, Component, ComponentLink, Html, InputData, ShouldRender, components::Select};
+use yew::{components::Select, html, Component, ComponentLink, Html, InputData, ShouldRender};
 mod component;
 use component::grid::Grid;
-use strum_macros::{Display, EnumIter, EnumString};
 use strum::IntoEnumIterator;
+use strum_macros::{Display, EnumIter, EnumString};
 
 pub struct Model {
     link: ComponentLink<Self>,
@@ -98,5 +98,5 @@ impl Component for Model {
 #[derive(Clone, Debug, Display, EnumString, EnumIter, PartialEq)]
 pub enum GridTemplate {
     Empty,
-    Simple
+    Simple,
 }

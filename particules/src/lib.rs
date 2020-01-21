@@ -2,6 +2,48 @@ pub mod agent;
 pub mod environment;
 pub mod sma;
 
+use agent::Agent;
+use environment::Environment;
+use std::cell::RefCell;
+use std::rc::Rc;
+
+#[derive(Clone, Debug)]
+pub struct AgentRef {
+    inner: Rc<RefCell<Agent>>,
+}
+
+impl AgentRef {
+    pub fn collision(&self) -> bool {
+        self.inner.borrow().collision
+    }
+
+    pub fn direction(&self) -> Direction {
+        self.inner.borrow().direction
+    }
+
+    pub fn coordinate(&self) -> Point {
+        self.inner.borrow().coordinate
+    }
+
+    pub fn set_collision(&self, collision: bool) {
+        self.inner.borrow_mut().collision = collision
+    }
+
+    pub fn set_direction(&self, direction: Direction) {
+        self.inner.borrow_mut().direction = direction
+    }
+
+    pub fn update(&mut self, env: &mut Environment) {
+        self.inner.borrow_mut().update(env)
+    }
+
+    pub fn from(agent: Agent) -> Self {
+        AgentRef {
+            inner: Rc::new(RefCell::new(agent)),
+        }
+    }
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Direction {
     pub x: HDirection,

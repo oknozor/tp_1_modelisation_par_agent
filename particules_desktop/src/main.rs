@@ -12,9 +12,9 @@ use std::io::prelude::*;
 use nannou::prelude::*;
 
 use particules::agent::Agent;
+use particules::sma::Sma;
 use particules::Direction;
 use particules::HDirection;
-use particules::sma::Sma;
 use particules::VDirection;
 
 mod user_config;
@@ -30,7 +30,6 @@ lazy_static! {
 
 fn main() {
     let args: Vec<String> = env::args().collect();
-
 
     nannou::app(model).update(update).run();
 }
@@ -128,20 +127,14 @@ impl Grid {
 
     fn generate(&mut self) {
         for agent in self.sma.agents.iter() {
-            let (x_agent, y_agent) = (
-                agent.borrow().coordinate.x as usize,
-                agent.borrow().coordinate.y as usize,
-            );
+            let (x_agent, y_agent) = (agent.coordinate().x as usize, agent.coordinate().y as usize);
             self.board[x_agent][y_agent].state = CellState::Empty;
         }
         self.sma.tick();
         for agent in self.sma.agents.iter() {
-            let (x_agent, y_agent) = (
-                agent.borrow().coordinate.x as usize,
-                agent.borrow().coordinate.y as usize,
-            );
+            let (x_agent, y_agent) = (agent.coordinate().x as usize, agent.coordinate().y as usize);
 
-            if agent.borrow().collision {
+            if agent.collision() {
                 self.board[x_agent][y_agent].state = CellState::Collision;
             } else {
                 self.board[x_agent][y_agent].state = CellState::Fill;
@@ -151,7 +144,6 @@ impl Grid {
 
     // This is the easy part, just draw the cells fill white if 1, black if 0
     fn display(&self, draw: &app::Draw, rect: &Rect) {
-
         for i in 0..self.columns {
             for j in 0..self.rows {
                 let x = (i * self.w) as f32 - rect.right() as f32;
@@ -166,7 +158,6 @@ impl Grid {
 struct Model {
     pub grid: Grid,
 }
-
 
 fn model(app: &App) -> Model {
     let cell_w = CONFIG.cell_size;
@@ -209,20 +200,20 @@ fn window_event(app: &App, model: &mut Model, event: WindowEvent) {
     match event {
         KeyPressed(code) => println!("{:?}", code),
         DroppedFile(path) => {
-//            let rect = Rect::from_w_h(config.x as f32x * cell_w, config.x as f32 * cell_w);
-//            let grid = Grid::new(rect);
-//            let mut sma = Sma::new(config.y as i32, config.x as i32);
-//
-//            sma.add_agent(Agent::new(
-//                0,
-//                0,
-//                Direction {
-//                    x: HDirection::Right,
-//                    y: VDirection::Up,
-//                },
-//            ));
-//
-//            model.grid = grid;
+            //            let rect = Rect::from_w_h(config.x as f32x * cell_w, config.x as f32 * cell_w);
+            //            let grid = Grid::new(rect);
+            //            let mut sma = Sma::new(config.y as i32, config.x as i32);
+            //
+            //            sma.add_agent(Agent::new(
+            //                0,
+            //                0,
+            //                Direction {
+            //                    x: HDirection::Right,
+            //                    y: VDirection::Up,
+            //                },
+            //            ));
+            //
+            //            model.grid = grid;
         }
         _ => {}
     }

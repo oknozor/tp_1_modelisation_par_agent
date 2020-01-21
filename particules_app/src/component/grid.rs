@@ -1,6 +1,7 @@
 use log::trace;
 use particules::agent::Agent;
 use particules::sma::Sma;
+use particules::AgentRef;
 use particules::Direction;
 use particules::HDirection;
 use particules::Point;
@@ -36,7 +37,7 @@ pub struct Grid {
 pub struct Props {
     pub width: i32,
     pub height: i32,
-    pub agents: Vec<Agent>,
+    pub agents: Vec<AgentRef>,
 }
 
 pub enum Msg {
@@ -56,7 +57,7 @@ impl Component for Grid {
     fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
         let callback = link.callback(|_| Msg::Tick);
         let mut interval = IntervalService::new();
-        let handle = interval.spawn(Duration::from_millis(200), callback);
+        let handle = interval.spawn(Duration::from_millis(70), callback);
         let sma = Sma::new(props.width, props.height);
         let refs = Self::init_refs(&sma);
         let direction = Direction::new(HDirection::Right, VDirection::None);
@@ -83,9 +84,9 @@ impl Component for Grid {
         match msg {
             Msg::AddAgent((x, y)) => {
                 if self.direction != Direction::new(HDirection::None, VDirection::None) {
-                    let agent = Agent::new(x, y, self.direction);
+                    let coordinate = Point { x, y };
 
-                    self.sma.add_agent(agent);
+                    self.sma.add_agent(coordinate, self.direction);
                     self.draw_agents();
                 } else {
                     self.error = "Please chose a direction".into()
@@ -195,21 +196,21 @@ impl Grid {
             <div>
             {
                 self.sma.agents.iter().enumerate().map(|(idx, agent)| {
-                    {self.agent_info((idx, &agent.borrow()))}
+                    {self.agent_info((idx, agent))}
                 }).collect::<Html>()
             }
             </div>
         }
     }
 
-    fn agent_info(&self, (idx, agent): (usize, &Agent)) -> Html {
+    fn agent_info(&self, (idx, agent): (usize, &AgentRef)) -> Html {
         html! {
             <div class ="row">
                 {idx}
-                {"| \tx : "} {agent.coordinate.x}
-                {"\ty : "} {agent.coordinate.y}
-                {"\tcollsion : "} {agent.collision}
-                {"\t direction : "} <i class={self.dir_to_arrow(agent.direction)}></i>
+                {"| \tx : "} {agent.coordinate().x}
+                {"\ty : "} {agent.coordinate().y}
+                {"\tcollsion : "} {agent.collision()}
+                {"\t direction : "} <i class={self.dir_to_arrow(agent.direction())}></i>
             </div>
         }
     }
@@ -236,9 +237,9 @@ impl Grid {
 
     fn draw_agents(&mut self) {
         self.sma.agents.iter().for_each(|agent| {
-            let color = Color::from(agent.borrow().collision);
+            let color = Color::from(agent.collision());
 
-            let idx = self.sma.get_index(agent.borrow().coordinate);
+            let idx = self.sma.get_index(agent.coordinate());
 
             if let Some(cell) = self.refs[idx].try_into::<Element>() {
                 cell.set_attribute("class", &format!("cell {}", color.as_str()))

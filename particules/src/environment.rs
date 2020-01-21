@@ -1,14 +1,13 @@
+use super::AgentRef;
 use super::Point;
-use crate::agent::Agent;
-use std::cell::RefCell;
-use std::rc::Rc;
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug)]
 pub enum Cell {
     Empty,
-    Filled(Rc<RefCell<Agent>>),
+    Filled(AgentRef),
 }
 
+#[derive(Debug)]
 pub struct Environment {
     pub(crate) width: i32,
     pub(crate) height: i32,
@@ -51,6 +50,16 @@ impl Environment {
         } else {
             let idx = self.get_index(point);
             Some(&self.cells[idx])
+        }
+    }
+
+    pub fn set_cell(&mut self, point: Point, cell: Cell) -> Result<(), &str> {
+        if self.out_of_bound(point) {
+            Err("Cannot set cell out of bounds!")
+        } else {
+            let idx = self.get_index(point);
+            self.cells[idx] = cell;
+            Ok(())
         }
     }
 

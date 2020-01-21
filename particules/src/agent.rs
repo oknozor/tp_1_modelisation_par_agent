@@ -1,53 +1,49 @@
+use super::AgentRef;
 use super::Direction;
 use super::HDirection;
 use super::Point;
 use super::VDirection;
 use crate::environment::Cell;
 use crate::environment::Environment;
-use std::cell::RefCell;
-use std::fmt::Debug;
-use std::rc::Rc;
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Debug)]
 pub struct Agent {
     pub direction: Direction,
     pub coordinate: Point,
+    pub previous_coordinate: Point,
     pub collision: bool,
 }
 
 enum Decision {
     KeepCourse,
-    ChangeCourseCollision(Rc<RefCell<Agent>>),
+    ChangeCourseCollision(AgentRef),
     ChangeCourseOutOfBound(Direction),
 }
 
 impl Agent {
-    pub fn update_env(&mut self, environment: &mut Environment) {
-        let idx = environment.get_index(self.coordinate);
-        environment.cells[idx] = Cell::Filled(Rc::new(RefCell::new(self.clone())));
-    }
-
-    pub fn clear(&mut self, environment: &mut Environment) {
-        let idx = environment.get_index(self.coordinate);
-        environment.cells[idx] = Cell::Empty;
-    }
-
     pub fn update(&mut self, environment: &mut Environment) {
-        self.clear(environment);
-
         match self.decide(environment) {
             Decision::ChangeCourseOutOfBound(direction) => {
                 self.direction.y = direction.y;
-                self.direction.x = direction.x
+                self.direction.x = direction.x;
+                self.collision = true;
             }
             Decision::ChangeCourseCollision(agent) if !environment.borderless => {
                 let direction = self.direction;
-                self.direction = agent.borrow().direction;
-                agent.borrow_mut().direction = direction;
-                agent.borrow_mut().collision = true;
+                self.direction = agent.direction();
+                agent.set_direction(direction);
+                agent.set_collision(true);
+                self.collision = true;
             }
-            _ => (),
+            _ => {
+                self.collision = false;
+                self.move_forward(environment);
+            }
         };
+    }
+
+    pub fn move_forward(&mut self, environment: &mut Environment) {
+        self.previous_coordinate = self.coordinate;
 
         let forward_position = if environment.borderless {
             self.look_ahead_borderless(environment.width, environment.height)
@@ -55,54 +51,17 @@ impl Agent {
             self.look_ahead()
         };
 
-        // Guard cell overlap
         match environment.get_cell(forward_position) {
-            Some(Cell::Empty) => self.coordinate = forward_position,
+            Some(Cell::Empty) => {
+                let agent = environment.get_cell(self.coordinate).unwrap().clone();
+                self.coordinate = forward_position;
+
+                environment
+                    .set_cell(self.previous_coordinate, Cell::Empty)
+                    .unwrap();
+                environment.set_cell(self.coordinate, agent).unwrap();
+            }
             _ => (),
-        };
-
-        self.collision(environment);
-        self.update_env(environment);
-    }
-
-    fn collision(&mut self, environment: &Environment) {
-        let on_edge_right = self.coordinate.x == environment.width - 1;
-        let on_edge_left = self.coordinate.x == 0;
-        let on_edge_top = self.coordinate.y == environment.height - 1;
-        let on_edge_bottom = self.coordinate.y == 0;
-
-        let wall_collision = if environment.borderless {
-            false
-        } else {
-            match (self.direction.x, self.direction.y) {
-                (HDirection::Right, VDirection::None) => on_edge_right,
-                (HDirection::Right, VDirection::Up) => on_edge_right || on_edge_bottom,
-                (HDirection::Right, VDirection::Down) => on_edge_right || on_edge_top,
-                (HDirection::Left, VDirection::None) => on_edge_left,
-                (HDirection::Left, VDirection::Up) => on_edge_left || on_edge_bottom,
-                (HDirection::Left, VDirection::Down) => on_edge_left || on_edge_top,
-                (HDirection::None, VDirection::Up) => on_edge_bottom,
-                (HDirection::None, VDirection::Down) => on_edge_top,
-                (_, _) => false,
-            }
-        };
-
-        if !wall_collision {
-            let forward_position = if environment.borderless {
-                self.look_ahead_borderless(environment.width, environment.height)
-            } else {
-                self.look_ahead()
-            };
-
-            let idx = environment.get_index(forward_position);
-
-            if let Some(Cell::Filled(_)) = environment.cells.get(idx) {
-                self.collision = true;
-            } else {
-                self.collision = false;
-            }
-        } else {
-            self.collision = true;
         }
     }
 
@@ -118,11 +77,11 @@ impl Agent {
 
         if !out_of_bound_x && !out_of_bound_y {
             let forward_idx = environment.get_index(forward_position);
-            let cell_forward = environment.cells[forward_idx].clone();
+            let cell_forward = &environment.cells[forward_idx];
 
             return match cell_forward {
                 Cell::Empty => Decision::KeepCourse,
-                Cell::Filled(agent) => Decision::ChangeCourseCollision(Rc::clone(&agent)),
+                Cell::Filled(agent) => Decision::ChangeCourseCollision(agent.clone()),
             };
         } else if out_of_bound_x && !out_of_bound_y {
             Decision::ChangeCourseOutOfBound(Direction::new(
@@ -187,7 +146,7 @@ impl Agent {
                     }
                 }
                 VDirection::Down => {
-                    if self.coordinate.y + 1 > height -  1 {
+                    if self.coordinate.y + 1 > height - 1 {
                         0
                     } else {
                         self.coordinate.y + 1
@@ -202,6 +161,7 @@ impl Agent {
         Agent {
             direction,
             coordinate: Point { x, y },
+            previous_coordinate: Point { x, y },
             collision: false,
         }
     }
