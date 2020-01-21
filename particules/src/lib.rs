@@ -25,6 +25,10 @@ impl AgentRef {
         self.inner.borrow().coordinate
     }
 
+    pub fn previous_coordinate(&self) -> Point {
+        self.inner.borrow().previous_coordinate
+    }
+
     pub fn set_collision(&self, collision: bool) {
         self.inner.borrow_mut().collision = collision
     }
