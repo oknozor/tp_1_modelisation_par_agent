@@ -1,10 +1,10 @@
-use super::agent::Decision;
+use super::particules::agent::Decision;
 use super::AgentRef;
 use super::Direction;
 use super::HDirection;
 use super::Point;
 use super::VDirection;
-use crate::agent::Agent;
+use crate::particules::agent::Agent;
 use crate::environment::Cell;
 use crate::environment::Environment;
 use rand::{seq::SliceRandom, thread_rng, Rng};
@@ -20,7 +20,6 @@ pub struct Sma {
 impl Sma {
     pub fn tick(&mut self) {
         self.shuffle_agents();
-        println!("{}", self.agents.len());
 
         // Update all agent positions sequentialy
         for agent in &mut self.agents {
@@ -62,7 +61,7 @@ impl Sma {
             };
 
             let agent_ref = AgentRef {
-                inner: Rc::new(RefCell::new(agent)),
+                inner: Rc::new(RefCell::new(Box::new(agent))),
             };
 
             self.agents.push(agent_ref.clone());

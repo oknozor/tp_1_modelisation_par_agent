@@ -1,40 +1,43 @@
-pub mod agent;
+pub mod core;
 pub mod environment;
 pub mod sma;
+pub mod wator;
+pub mod particules;
 
-use agent::Agent;
+use particules::agent::Agent;
+use crate::core::AgentBehavior;
 use environment::Environment;
 use std::cell::RefCell;
 use std::rc::Rc;
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct AgentRef {
-    inner: Rc<RefCell<Agent>>,
+    inner: Rc<RefCell<Box<dyn AgentBehavior>>>,
 }
 
 impl AgentRef {
     pub fn collision(&self) -> bool {
-        self.inner.borrow().collision
+        self.inner.borrow().collision()
     }
 
     pub fn direction(&self) -> Direction {
-        self.inner.borrow().direction
+        self.inner.borrow().direction()
     }
 
     pub fn coordinate(&self) -> Point {
-        self.inner.borrow().coordinate
+        self.inner.borrow().coordinate()
     }
 
     pub fn previous_coordinate(&self) -> Point {
-        self.inner.borrow().previous_coordinate
+        self.inner.borrow().previous_coordinate()
     }
 
     pub fn set_collision(&self, collision: bool) {
-        self.inner.borrow_mut().collision = collision
+        self.inner.borrow_mut().set_collision(collision)
     }
 
     pub fn set_direction(&self, direction: Direction) {
-        self.inner.borrow_mut().direction = direction
+        self.inner.borrow_mut().set_direction(direction)
     }
 
     pub fn update(&mut self, env: &mut Environment) {
@@ -47,7 +50,7 @@ impl AgentRef {
 
     pub fn from(agent: Agent) -> Self {
         AgentRef {
-            inner: Rc::new(RefCell::new(agent)),
+            inner: Rc::new(RefCell::new(Box::new(agent))),
         }
     }
 }

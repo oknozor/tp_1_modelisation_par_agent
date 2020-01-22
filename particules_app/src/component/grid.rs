@@ -85,8 +85,9 @@ impl Component for Grid {
                 if self.direction != Direction::new(HDirection::None, VDirection::None) {
                     let coordinate = Point { x, y };
 
-                    self.sma.add_agent(coordinate, self.direction).unwrap();
-                    self.draw_agents();
+                    if let Ok(()) = self.sma.add_agent(coordinate, self.direction) {
+                        self.draw_agents();
+                    }
                 } else {
                     self.error = "Please chose a direction".into()
                 }
@@ -112,10 +113,14 @@ impl Component for Grid {
                 return true;
             }
             Msg::Tick => {
+                trace!("coucou");
                 if self.active {
                     self.clear_filled_cells();
+                    trace!("coucou");
                     self.sma.tick();
+                    trace!("coucou");
                     self.draw_agents();
+                    trace!("coucou");
                 }
             }
             Msg::ChangeDir(dir) => {
@@ -227,9 +232,9 @@ impl Grid {
         self.refs.iter().for_each(|cell_ref| {
             if let Some(cell) = cell_ref.try_into::<Element>() {
                 cell.set_attribute("class", &format!("cell {}", Color::None.as_str()))
-                    .unwrap_or_else(|_| {
-                        trace!("Something went wrong updating html refs, please refresh the page")
-                    })
+                .unwrap_or_else(|_| {
+                    trace!("Something went wrong updating html refs, please refresh the page")
+                })
             }
         });
     }

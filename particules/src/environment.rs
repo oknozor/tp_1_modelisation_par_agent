@@ -1,13 +1,12 @@
 use super::AgentRef;
 use super::Point;
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub enum Cell {
     Empty,
     Filled(AgentRef),
 }
 
-#[derive(Debug)]
 pub struct Environment {
     pub(crate) width: i32,
     pub(crate) height: i32,
