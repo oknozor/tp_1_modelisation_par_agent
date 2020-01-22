@@ -12,7 +12,7 @@ use std::sync::Mutex;
 
 #[derive(Clone)]
 pub struct AgentRef {
-    inner: Arc<Mutex<Box<dyn AgentBehavior>>>,
+    inner: Arc<Mutex<Box<dyn AgentBehavior + Sync + Send>>>,
 }
 
 impl AgentRef {
@@ -44,7 +44,7 @@ impl AgentRef {
         self.inner.lock().unwrap().update(env)
     }
 
-    pub fn decide(&mut self, env: &mut Environment) {
+    pub fn decide(&mut self, env: &Environment) {
         self.inner.lock().unwrap().decide(env)
     }
 

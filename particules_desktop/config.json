@@ -1,8 +1,8 @@
 {
-    "x": 1100.0,
-    "y": 1100.0,
-    "cell_size": 2,
+    "x": 100.0,
+    "y": 100.0,
+    "cell_size": 16,
     "agents": 1,
-    "density": 20,
+    "density": 1,
     "grid": false
 }

@@ -20,7 +20,7 @@ pub(crate) enum Decision {
 }
 
 impl AgentBehavior for Agent {
-    fn decide(&mut self, environment: &mut Environment) {
+    fn decide(&mut self, environment: &Environment) {
         let forward_position = if environment.borderless {
             self.look_ahead_borderless(environment.width, environment.height)
         } else {

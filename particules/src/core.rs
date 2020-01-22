@@ -6,7 +6,7 @@ use super::Point;
 use super::VDirection;
 
 pub trait AgentBehavior {
-    fn decide(&mut self, environment: &mut Environment);
+    fn decide(&mut self, environment: &Environment);
     fn update(&mut self, environment: &mut Environment);
     fn collision(&self) -> bool;
     fn direction(&self) -> Direction;

@@ -11,6 +11,7 @@ use rand::{seq::SliceRandom, thread_rng, Rng};
 use std::sync::Arc;
 use std::sync::Mutex;
 use std::time::SystemTime;
+use rayon::prelude::*;
 
 pub struct Sma {
     pub env: Environment,
@@ -19,12 +20,13 @@ pub struct Sma {
 
 impl Sma {
     pub fn tick(&mut self) {
-        self.shuffle_agents();
         // Update all agent positions sequentialy
+        let env = &mut self.env;
         for agent in &mut self.agents {
-            agent.decide(&mut self.env);
-            agent.update(&mut self.env);
+            agent.decide(env);
+            agent.update(env);
         }
+        self.shuffle_agents();
     }
 
     pub fn new(height: i32, width: i32) -> Sma {
@@ -114,16 +116,13 @@ impl Sma {
         (0..(agent_count as usize)).for_each(|i| {
             let direction = Sma::pick_direction();
             let idx = vec[i];
+
             let x = idx % self.env.width;
-            let x = if x < 0 { 0 } else { x };
-            let y = idx / self.env.height;
-            let y = if y < 0 { 0 } else { y };
+            let y = (idx - x) / self.env.width;
             let point = Point { x, y };
 
             self.add_agent_unsafe(point, direction);
-        });
-
-        println!("time {}", now.elapsed().unwrap().as_secs());
+        })
     }
 
     fn pick_direction() -> Direction {

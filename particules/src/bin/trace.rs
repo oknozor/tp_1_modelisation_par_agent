@@ -1,14 +1,13 @@
 use particules::sma::Sma;
+use std::time::{Duration, SystemTime};
 
 fn main() {
     let mut sma = Sma::new(1100, 1100);
 
-    sma.gen_agents(40);
-
-    let mut count = 0;
+    sma.gen_agents(90);
     loop {
+        let now = SystemTime::now();
         sma.tick();
-        println!("tick {}", count);
-        count += 1;
+        println!("{}", now.elapsed().unwrap().as_millis());
     }
 }
