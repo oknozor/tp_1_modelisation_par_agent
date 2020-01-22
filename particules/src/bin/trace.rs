@@ -5,11 +5,10 @@ fn main() {
 
     sma.gen_agents(40);
 
-
     let mut count = 0;
     loop {
         sma.tick();
         println!("tick {}", count);
-        count+=1;
+        count += 1;
     }
 }

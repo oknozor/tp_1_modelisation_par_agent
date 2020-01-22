@@ -95,7 +95,6 @@ fn model(app: &App) -> Model {
     Model { grid }
 }
 
-
 fn update(_app: &App, m: &mut Model, _update: Update) {
     m.grid.sma.tick();
 }

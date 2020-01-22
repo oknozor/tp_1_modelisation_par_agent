@@ -1,5 +1,4 @@
 use log::trace;
-use particules::agent::Agent;
 use particules::sma::Sma;
 use particules::AgentRef;
 use particules::Direction;
@@ -86,7 +85,7 @@ impl Component for Grid {
                 if self.direction != Direction::new(HDirection::None, VDirection::None) {
                     let coordinate = Point { x, y };
 
-                    self.sma.add_agent(coordinate, self.direction);
+                    self.sma.add_agent(coordinate, self.direction).unwrap();
                     self.draw_agents();
                 } else {
                     self.error = "Please chose a direction".into()

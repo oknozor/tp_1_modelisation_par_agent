@@ -1,3 +1,4 @@
+use super::agent::Decision;
 use super::AgentRef;
 use super::Direction;
 use super::HDirection;
@@ -9,7 +10,7 @@ use crate::environment::Environment;
 use rand::{seq::SliceRandom, thread_rng, Rng};
 use std::cell::RefCell;
 use std::rc::Rc;
-use std::time::{SystemTime};
+use std::time::SystemTime;
 
 pub struct Sma {
     pub env: Environment,
@@ -23,7 +24,8 @@ impl Sma {
 
         // Update all agent positions sequentialy
         for agent in &mut self.agents {
-            agent.update(&mut self.env)
+            agent.decide(&mut self.env);
+            agent.update(&mut self.env);
         }
     }
 
@@ -56,6 +58,7 @@ impl Sma {
                 coordinate,
                 previous_coordinate: coordinate,
                 direction,
+                decision: Decision::KeepCourse,
             };
 
             let agent_ref = AgentRef {
@@ -103,11 +106,11 @@ impl Sma {
             println!("agent {:?}, {:?}", point, direction);
             if let Ok(()) = self.add_agent(point, direction) {
                 println!("agent {}/{}", i, agent_count);
-                continue
+                continue;
             }
         }
 
-        println!("time {}",now.elapsed().unwrap().as_secs());
+        println!("time {}", now.elapsed().unwrap().as_secs());
     }
 
     fn pick_direction() -> Direction {

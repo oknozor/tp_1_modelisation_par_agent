@@ -41,6 +41,10 @@ impl AgentRef {
         self.inner.borrow_mut().update(env)
     }
 
+    pub fn decide(&mut self, env: &mut Environment) {
+        self.inner.borrow_mut().decide(env)
+    }
+
     pub fn from(agent: Agent) -> Self {
         AgentRef {
             inner: Rc::new(RefCell::new(agent)),
@@ -96,13 +100,5 @@ impl VDirection {
             VDirection::Down => VDirection::Up,
             VDirection::Up => VDirection::Down,
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
     }
 }

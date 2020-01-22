@@ -12,9 +12,11 @@ pub struct Agent {
     pub coordinate: Point,
     pub previous_coordinate: Point,
     pub collision: bool,
+    pub(crate) decision: Decision,
 }
 
-enum Decision {
+#[derive(Debug)]
+pub(crate) enum Decision {
     KeepCourse,
     ChangeCourseCollision(AgentRef),
     ChangeCourseOutOfBound(Direction),
@@ -22,7 +24,7 @@ enum Decision {
 
 impl Agent {
     pub fn update(&mut self, environment: &mut Environment) {
-        match self.decide(environment) {
+        match &self.decision {
             Decision::ChangeCourseOutOfBound(direction) => {
                 self.direction.y = direction.y;
                 self.direction.x = direction.x;
@@ -65,7 +67,7 @@ impl Agent {
         }
     }
 
-    fn decide(&mut self, environment: &mut Environment) -> Decision {
+    pub fn decide(&mut self, environment: &mut Environment) {
         let forward_position = if environment.borderless {
             self.look_ahead_borderless(environment.width, environment.height)
         } else {
@@ -75,14 +77,14 @@ impl Agent {
         let out_of_bound_x = environment.is_out_of_bound_x(forward_position.x);
         let out_of_bound_y = environment.is_out_of_bound_y(forward_position.y);
 
-        if !out_of_bound_x && !out_of_bound_y {
+        self.decision = if !out_of_bound_x && !out_of_bound_y {
             let forward_idx = environment.get_index(forward_position);
             let cell_forward = &environment.cells[forward_idx];
 
-            return match cell_forward {
+            match cell_forward {
                 Cell::Empty => Decision::KeepCourse,
                 Cell::Filled(agent) => Decision::ChangeCourseCollision(agent.clone()),
-            };
+            }
         } else if out_of_bound_x && !out_of_bound_y {
             Decision::ChangeCourseOutOfBound(Direction::new(
                 self.direction.x.invert(),
@@ -163,6 +165,7 @@ impl Agent {
             coordinate: Point { x, y },
             previous_coordinate: Point { x, y },
             collision: false,
+            decision: Decision::KeepCourse,
         }
     }
 }
