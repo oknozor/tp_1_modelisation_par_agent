@@ -1,9 +1,9 @@
+use super::environment::Cell;
 use super::environment::Environment;
 use super::Direction;
 use super::HDirection;
-use super::VDirection;
-use super::environment::Cell;
 use super::Point;
+use super::VDirection;
 
 pub trait AgentBehavior {
     fn decide(&mut self, environment: &mut Environment);

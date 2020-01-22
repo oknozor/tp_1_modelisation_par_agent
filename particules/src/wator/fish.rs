@@ -1,5 +1,5 @@
-use crate::Point;
 use crate::Direction;
+use crate::Point;
 
 pub struct Fish {
     pub direction: Direction,

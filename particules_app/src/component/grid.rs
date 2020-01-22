@@ -232,9 +232,9 @@ impl Grid {
         self.refs.iter().for_each(|cell_ref| {
             if let Some(cell) = cell_ref.try_into::<Element>() {
                 cell.set_attribute("class", &format!("cell {}", Color::None.as_str()))
-                .unwrap_or_else(|_| {
-                    trace!("Something went wrong updating html refs, please refresh the page")
-                })
+                    .unwrap_or_else(|_| {
+                        trace!("Something went wrong updating html refs, please refresh the page")
+                    })
             }
         });
     }

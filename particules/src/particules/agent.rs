@@ -1,9 +1,9 @@
 use crate::core::AgentBehavior;
+use crate::environment::Cell;
+use crate::environment::Environment;
 use crate::AgentRef;
 use crate::Direction;
 use crate::Point;
-use crate::environment::Cell;
-use crate::environment::Environment;
 
 pub struct Agent {
     pub direction: Direction,

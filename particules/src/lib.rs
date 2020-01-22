@@ -1,56 +1,56 @@
 pub mod core;
 pub mod environment;
+pub mod particules;
 pub mod sma;
 pub mod wator;
-pub mod particules;
 
-use particules::agent::Agent;
 use crate::core::AgentBehavior;
 use environment::Environment;
-use std::cell::RefCell;
-use std::rc::Rc;
+use particules::agent::Agent;
+use std::sync::Arc;
+use std::sync::Mutex;
 
 #[derive(Clone)]
 pub struct AgentRef {
-    inner: Rc<RefCell<Box<dyn AgentBehavior>>>,
+    inner: Arc<Mutex<Box<dyn AgentBehavior>>>,
 }
 
 impl AgentRef {
     pub fn collision(&self) -> bool {
-        self.inner.borrow().collision()
+        self.inner.lock().unwrap().collision()
     }
 
     pub fn direction(&self) -> Direction {
-        self.inner.borrow().direction()
+        self.inner.lock().unwrap().direction()
     }
 
     pub fn coordinate(&self) -> Point {
-        self.inner.borrow().coordinate()
+        self.inner.lock().unwrap().coordinate()
     }
 
     pub fn previous_coordinate(&self) -> Point {
-        self.inner.borrow().previous_coordinate()
+        self.inner.lock().unwrap().previous_coordinate()
     }
 
     pub fn set_collision(&self, collision: bool) {
-        self.inner.borrow_mut().set_collision(collision)
+        self.inner.lock().unwrap().set_collision(collision)
     }
 
     pub fn set_direction(&self, direction: Direction) {
-        self.inner.borrow_mut().set_direction(direction)
+        self.inner.lock().unwrap().set_direction(direction)
     }
 
     pub fn update(&mut self, env: &mut Environment) {
-        self.inner.borrow_mut().update(env)
+        self.inner.lock().unwrap().update(env)
     }
 
     pub fn decide(&mut self, env: &mut Environment) {
-        self.inner.borrow_mut().decide(env)
+        self.inner.lock().unwrap().decide(env)
     }
 
     pub fn from(agent: Agent) -> Self {
         AgentRef {
-            inner: Rc::new(RefCell::new(Box::new(agent))),
+            inner: Arc::new(Mutex::new(Box::new(agent))),
         }
     }
 }

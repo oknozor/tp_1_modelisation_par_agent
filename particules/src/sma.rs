@@ -4,12 +4,12 @@ use super::Direction;
 use super::HDirection;
 use super::Point;
 use super::VDirection;
-use crate::particules::agent::Agent;
 use crate::environment::Cell;
 use crate::environment::Environment;
+use crate::particules::agent::Agent;
 use rand::{seq::SliceRandom, thread_rng, Rng};
-use std::cell::RefCell;
-use std::rc::Rc;
+use std::sync::Arc;
+use std::sync::Mutex;
 use std::time::SystemTime;
 
 pub struct Sma {
@@ -20,7 +20,6 @@ pub struct Sma {
 impl Sma {
     pub fn tick(&mut self) {
         self.shuffle_agents();
-
         // Update all agent positions sequentialy
         for agent in &mut self.agents {
             agent.decide(&mut self.env);
@@ -61,7 +60,7 @@ impl Sma {
             };
 
             let agent_ref = AgentRef {
-                inner: Rc::new(RefCell::new(Box::new(agent))),
+                inner: Arc::new(Mutex::new(Box::new(agent))),
             };
 
             self.agents.push(agent_ref.clone());
@@ -72,6 +71,25 @@ impl Sma {
         } else {
             Err("Agent already stored at this location!")
         }
+    }
+
+    fn add_agent_unsafe(&mut self, coordinate: Point, direction: Direction) {
+        let agent = Agent {
+            collision: false,
+            coordinate,
+            previous_coordinate: coordinate,
+            direction,
+            decision: Decision::KeepCourse,
+        };
+
+        let agent_ref = AgentRef {
+            inner: Arc::new(Mutex::new(Box::new(agent))),
+        };
+
+        self.agents.push(agent_ref.clone());
+        self.env
+            .set_cell(coordinate, Cell::Filled(agent_ref))
+            .unwrap();
     }
 
     pub fn gen_agents(&mut self, density: u8) {
@@ -93,7 +111,7 @@ impl Sma {
             agent_count, size
         );
 
-        for i in 0..agent_count as usize {
+        (0..(agent_count as usize)).for_each(|i| {
             let direction = Sma::pick_direction();
             let idx = vec[i];
             let x = idx % self.env.width;
@@ -102,12 +120,8 @@ impl Sma {
             let y = if y < 0 { 0 } else { y };
             let point = Point { x, y };
 
-            println!("agent {:?}, {:?}", point, direction);
-            if let Ok(()) = self.add_agent(point, direction) {
-                println!("agent {}/{}", i, agent_count);
-                continue;
-            }
-        }
+            self.add_agent_unsafe(point, direction);
+        });
 
         println!("time {}", now.elapsed().unwrap().as_secs());
     }
