@@ -1,8 +1,4 @@
 use particules::sma::Sma;
-use particules::Direction;
-use particules::HDirection;
-use particules::Point;
-use particules::VDirection;
 
 fn main() {
     let mut sma = Sma::new(1100, 1100);

@@ -12,10 +12,6 @@ use nannou::prelude::*;
 
 use particules::sma::Sma;
 use particules::AgentRef;
-use particules::Direction;
-use particules::HDirection;
-use particules::Point;
-use particules::VDirection;
 
 mod user_config;
 
@@ -39,35 +35,7 @@ struct Grid {
 impl Grid {
     fn new() -> Self {
         let mut sma = Sma::new(CONFIG.x as i32, CONFIG.y as i32);
-
         sma.gen_agents(CONFIG.density);
-        // sma.add_agent(
-        //     Point { x: 0, y: 0 },
-        //     Direction {
-        //         x: HDirection::Right,
-        //         y: VDirection::None,
-        //     },
-        // )
-        // .unwrap();
-
-        // sma.add_agent(
-        //     Point { x: 19, y: 0 },
-        //     Direction {
-        //         x: HDirection::None,
-        //         y: VDirection::Down,
-        //     },
-        // )
-        // .unwrap();
-
-        // sma.add_agent(
-        //     Point { x: 0, y: 19 },
-        //     Direction {
-        //         x: HDirection::Right,
-        //         y: VDirection::Up,
-        //     },
-        // )
-        // .unwrap();
-
         Grid { sma }
     }
 
