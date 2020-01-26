@@ -1,9 +1,9 @@
 use crate::core::AgentBehavior;
 use crate::environment::Cell;
 use crate::environment::Environment;
-use crate::AgentRef;
 use crate::Direction;
 use crate::Point;
+use crate::{AgentCommand, AgentRef};
 
 pub struct Agent {
     pub direction: Direction,
@@ -58,7 +58,7 @@ impl AgentBehavior for Agent {
         }
     }
 
-    fn update(&mut self, environment: &mut Environment) {
+    fn update(&mut self, environment: &mut Environment) -> AgentCommand {
         match &self.decision {
             Decision::ChangeCourseOutOfBound(direction) => {
                 self.direction.y = direction.y;
@@ -77,6 +77,7 @@ impl AgentBehavior for Agent {
                 self.move_forward(environment);
             }
         };
+        AgentCommand::DoNothing
     }
 
     fn collision(&self) -> bool {
@@ -109,5 +110,13 @@ impl AgentBehavior for Agent {
 
     fn set_direction(&mut self, direction: Direction) {
         self.direction = direction
+    }
+
+    fn get_color(&self) -> (f32, f32, f32) {
+        if self.collision {
+            (1.0, 0.0, 0.0)
+        } else {
+            (0.0, 0.0, 0.0)
+        }
     }
 }

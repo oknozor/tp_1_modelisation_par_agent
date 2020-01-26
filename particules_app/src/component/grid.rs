@@ -5,6 +5,7 @@ use particules::Direction;
 use particules::HDirection;
 use particules::Point;
 use particules::VDirection;
+use particules::SMA;
 
 use std::time::Duration;
 use yew::{
@@ -22,7 +23,6 @@ use stdweb::web::IElement;
 pub struct Grid {
     link: ComponentLink<Self>,
     props: Props,
-    sma: Sma,
     direction: Direction,
     active: bool,
     borderless: bool,
@@ -57,13 +57,12 @@ impl Component for Grid {
         let callback = link.callback(|_| Msg::Tick);
         let mut interval = IntervalService::new();
         let handle = interval.spawn(Duration::from_millis(70), callback);
-        let sma = Sma::new(props.width, props.height);
-        let refs = Self::init_refs(&sma);
+        Sma::new(props.width, props.height);
+        let refs = Self::init_refs();
         let direction = Direction::new(HDirection::Right, VDirection::None);
 
         Grid {
             link,
-            sma,
             props,
             direction,
             error: "".into(),
@@ -85,7 +84,7 @@ impl Component for Grid {
                 if self.direction != Direction::new(HDirection::None, VDirection::None) {
                     let coordinate = Point { x, y };
 
-                    if let Ok(()) = self.sma.add_agent(coordinate, self.direction) {
+                    if let Ok(()) = SMA.write().unwrap().gen_agent(coordinate, self.direction) {
                         self.draw_agents();
                     }
                 } else {
@@ -100,7 +99,7 @@ impl Component for Grid {
             Msg::Clear => {
                 self.active = false;
                 self.clear_filled_cells();
-                self.sma = Sma::new(self.props.width, self.props.height);
+                Sma::new(self.props.width, self.props.height);
                 return true;
             }
             Msg::Step => {
@@ -108,7 +107,7 @@ impl Component for Grid {
                     self.active = false;
                 }
                 self.clear_filled_cells();
-                self.sma.tick();
+                SMA.write().unwrap().tick();
                 self.draw_agents();
                 return true;
             }
@@ -117,7 +116,7 @@ impl Component for Grid {
                 if self.active {
                     self.clear_filled_cells();
                     trace!("coucou");
-                    self.sma.tick();
+                    SMA.write().unwrap().tick();
                     trace!("coucou");
                     self.draw_agents();
                     trace!("coucou");
@@ -128,7 +127,7 @@ impl Component for Grid {
                 return true;
             }
             Msg::Borderless => {
-                self.sma.set_borderless(!self.borderless);
+                SMA.write().unwrap().set_borderless(!self.borderless);
                 return true;
             }
         }
@@ -189,7 +188,7 @@ impl Grid {
     }
 
     fn view_cell(&self, point: Point) -> Html {
-        let idx = self.sma.get_index(point);
+        let idx = SMA.read().unwrap().get_index(point);
         html! {
             <CellComponent x={point.x} y ={point.y} ref=self.refs[idx].clone() on_click=self.link.callback(Msg::AddAgent)/>
         }
@@ -199,7 +198,7 @@ impl Grid {
         html! {
             <div>
             {
-                self.sma.agents.iter().enumerate().map(|(idx, agent)| {
+                SMA.write().unwrap().agents.iter().enumerate().map(|(idx, agent)| {
                     {self.agent_info((idx, agent))}
                 }).collect::<Html>()
             }
@@ -219,9 +218,9 @@ impl Grid {
         }
     }
 
-    pub fn init_refs(sma: &Sma) -> Vec<NodeRef> {
+    pub fn init_refs() -> Vec<NodeRef> {
         let mut refs = vec![];
-        for _ in sma.get_state() {
+        for _ in SMA.read().unwrap().get_state() {
             refs.push(NodeRef::default())
         }
 
@@ -240,10 +239,10 @@ impl Grid {
     }
 
     fn draw_agents(&mut self) {
-        self.sma.agents.iter().for_each(|agent| {
+        SMA.read().unwrap().agents.iter().for_each(|agent| {
             let color = Color::from(agent.collision());
 
-            let idx = self.sma.get_index(agent.coordinate());
+            let idx = SMA.read().unwrap().get_index(agent.coordinate());
 
             if let Some(cell) = self.refs[idx].try_into::<Element>() {
                 cell.set_attribute("class", &format!("cell {}", color.as_str()))

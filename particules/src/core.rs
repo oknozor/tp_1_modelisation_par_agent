@@ -1,13 +1,15 @@
+use crate::{AgentCommand};
+
+use super::Direction;
 use super::environment::Cell;
 use super::environment::Environment;
-use super::Direction;
 use super::HDirection;
 use super::Point;
 use super::VDirection;
 
 pub trait AgentBehavior {
     fn decide(&mut self, environment: &Environment);
-    fn update(&mut self, environment: &mut Environment);
+    fn update(&mut self, environment: &mut Environment) -> AgentCommand;
     fn collision(&self) -> bool;
     fn direction(&self) -> Direction;
     fn coordinate(&self) -> Point;
@@ -16,6 +18,32 @@ pub trait AgentBehavior {
     fn set_previous_coordinate(&mut self, point: Point);
     fn set_collision(&mut self, collision: bool);
     fn set_direction(&mut self, direction: Direction);
+    fn get_color(&self) -> (f32, f32, f32);
+
+    fn peek(&self, environment: &Environment, x_offset: i32, y_offset: i32) -> Option<Point> {
+        let position = Point::new(
+            self.coordinate().x + x_offset,
+            self.coordinate().y + y_offset,
+        );
+        if let Some(Cell::Empty) = environment.get_cell(position) {
+            Some(position)
+        } else {
+            None
+        }
+    }
+
+    fn peek_cell<'a>(
+        &self,
+        environment: &'a Environment,
+        x_offset: i32,
+        y_offset: i32,
+    ) -> Option<(&'a Cell, Point)> {
+        let position = Point::new(
+            self.coordinate().x + x_offset,
+            self.coordinate().y + y_offset,
+        );
+        environment.get_cell(position).map(|cell| (cell, position))
+    }
 
     fn move_forward(&mut self, environment: &mut Environment) {
         self.set_previous_coordinate(self.coordinate());
